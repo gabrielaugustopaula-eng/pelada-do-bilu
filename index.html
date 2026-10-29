@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10251b">
+<title>Pelada do Bilu — Controle da Pelada</title>
+<style>
+:root{--bg:#f3f6f3;--card:#fff;--ink:#18251d;--muted:#647168;--green:#176b43;--green2:#e3f4e9;--line:#dce5dd;--blue:#1769aa;--pink:#d94f91;--black:#343434;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#10251b;color:white;padding:22px 16px 18px}header .wrap,main{max-width:900px;margin:auto}header h1{margin:0;font-size:25px}header p{margin:4px 0 0;color:#c8d8ce;font-size:13px}
+nav{display:flex;gap:7px;overflow-x:auto;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
+nav button{border:0;border-radius:999px;padding:9px 13px;background:#edf2ee;color:#34443a;white-space:nowrap;font-weight:650;cursor:pointer}nav button.active{background:var(--green);color:white}
+main{padding:16px 13px 44px}.page{display:none}.page.active{display:block}
+h2{font-size:21px;margin:5px 0 14px}h3{font-size:16px;margin:0 0 10px}.muted{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;min-width:0}.metric{font-size:26px;font-weight:800;letter-spacing:-.5px}.metric-label{font-size:12px;color:var(--muted)}.row{display:flex;gap:10px;align-items:center}.between{justify-content:space-between}.grow{flex:1;min-width:0}
+label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,select,textarea{width:100%;border:1px solid #cbd7cd;border-radius:10px;padding:11px 10px;font:inherit;background:white;color:var(--ink)}input[type=checkbox]{width:auto}button{font:inherit}
+.btn{border:0;border-radius:10px;background:var(--green);color:white;padding:11px 14px;font-weight:750;cursor:pointer}.btn.secondary{background:#e9f0eb;color:#244331}.btn.danger{background:#fff0ef;color:var(--red)}.btn.small{padding:7px 10px;font-size:13px}.btn:disabled{opacity:.45;cursor:not-allowed}
+form .btn{margin-top:13px;width:100%}.team{border-radius:12px;padding:12px;color:white;margin-bottom:9px}.team strong{display:block}.team .members{font-size:12px;opacity:.94;margin-top:5px}.blue{background:var(--blue)}.green{background:#27864a}.pink{background:var(--pink)}.black{background:var(--black)}
+.list{display:flex;flex-direction:column;gap:8px}.item{border:1px solid var(--line);border-radius:11px;padding:10px 11px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff}.item small{display:block;color:var(--muted)}.pill{font-size:11px;font-weight:800;background:var(--green2);color:#176b43;border-radius:999px;padding:4px 8px}.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:700}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.restable th,.restable td{padding:9px 4px}@media(max-width:420px){.restable{font-size:12px}.restable th,.restable td{padding:9px 3px}}
+.notice{background:#fff8df;border:1px solid #f0df9c;border-radius:12px;padding:12px;font-size:13px;margin-bottom:12px}
+.scoreline{display:grid;grid-template-columns:1fr 70px 70px;gap:8px;align-items:center}.scoreline label{margin:0}.goal-entry{display:grid;grid-template-columns:42px minmax(0,1fr);gap:9px;align-items:center;margin:8px 0}.goal-number{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:var(--green2);color:var(--green);font-weight:850}.goal-entry select{padding:10px}.goal-list{margin-top:7px}.goal-hint{font-size:12px;color:var(--muted);margin:5px 0 10px}
+
+.team .btn{background:rgba(255,255,255,.22);color:#fff;margin-top:10px;width:100%}.team .btn:hover{background:rgba(255,255,255,.32)}
+.modal{position:fixed;inset:0;background:rgba(10,22,16,.6);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:0}.modal[hidden]{display:none}
+.modal-box{background:#fff;width:100%;max-width:520px;max-height:88vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;color:#fff}.modal-head h3{margin:0;font-size:18px}.modal-head .btn{background:rgba(255,255,255,.25);color:#fff}
+.modal-info{padding:12px 16px 6px;border-bottom:1px solid var(--line)}.modal-body{padding:10px 16px 12px;overflow-y:auto;flex:1}.modal-count{font-weight:750}.modal-msg{min-height:18px;font-size:12px;color:var(--red);margin-top:2px}
+.pick{display:flex;align-items:center;gap:12px;margin:0;padding:12px;border:1px solid var(--line);border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;background:#fff}.pick input{width:22px;height:22px;flex:none}.pick.on{border-color:var(--green);background:var(--green2)}
+.modal-actions{display:flex;gap:10px;padding:12px 16px;border-top:1px solid var(--line)}.modal-actions .btn{flex:1}
+@media(min-width:650px){.modal{align-items:center;padding:20px}.modal-box{border-radius:18px}}
+footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
+@media(min-width:650px){main{padding:22px 18px}.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.teamgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.team{margin-bottom:0}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+#loginScreen[hidden]{display:none}#appShell[hidden]{display:none}
+.login-card{width:100%;max-width:420px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 10px 35px rgba(16,37,27,.08)}
+.login-card h1{font-size:24px;margin:0 0 6px}.login-card p{color:var(--muted);font-size:14px;margin:0 0 16px}.login-error{color:var(--red);font-size:13px;min-height:18px;margin-top:8px}.cloud-status{font-size:11px;color:#c8d8ce;margin-top:6px}
+</style>
+</head>
+<body>
+<section id="loginScreen">
+  <form id="loginForm" class="login-card">
+    <h1>⚽ Pelada do Bilu</h1>
+    <p>Entre com o usuário administrador criado no Supabase.</p>
+    <label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="seu@email.com">
+    <label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Sua senha">
+    <button class="btn" id="loginButton" type="submit">Entrar</button>
+    <div id="loginError" class="login-error" role="status"></div>
+    <p style="margin:10px 0 0;font-size:12px">Acesso restrito. Não existe cadastro público nesta tela.</p>
+  </form>
+</section>
+<div id="appShell" hidden>
+<header><div class="wrap"><div class="row between"><div><h1>⚽ Pelada do Bilu</h1><p>Controle da pelada • segunda-feira</p><div id="cloudStatus" class="cloud-status">Conectando à nuvem…</div></div><button class="btn small" id="logoutBtn" type="button">Sair</button></div></div></header>
+<nav id="nav">
+<button class="active" data-page="inicio">Início</button><button data-page="jogadores">Jogadores</button><button data-page="times">Times</button><button data-page="partidas">Partidas</button><button data-page="ranking">Ranking</button><button data-page="dados">Dados</button>
+</nav>
+<main>
+<section class="page active" id="inicio">
+<h2>Painel da pelada</h2>
+<div class="grid" id="metrics"></div>
+<div class="card"><div class="row between"><div><h3>Ranking do mês</h3><div class="muted" id="monthLabel"></div></div><button class="btn secondary small" data-go="ranking">Ver ranking</button></div><div id="homeRanking"></div></div>
+<div class="card"><h3>Últimas partidas</h3><div id="recentMatches"></div></div>
+<div class="notice">Os dados desta versão ficam salvos neste navegador/aparelho. Use a seção <b>Dados</b> para exportar uma cópia de segurança.</div>
+</section>
+<section class="page" id="jogadores">
+<h2>Jogadores</h2>
+<div class="card"><h3>Cadastrar jogador</h3><form id="playerForm"><label for="playerName">Nome do jogador</label><input id="playerName" required maxlength="60" placeholder="Digite o nome completo"><label><input id="isGoalkeeper" type="checkbox"> É um dos goleiros fixos</label><button class="btn">Adicionar jogador</button></form></div>
+<div class="card"><div class="row between"><h3>Lista de participantes</h3><span class="pill" id="playerCount"></span></div><div class="list" id="playerList"></div></div>
+</section>
+<section class="page" id="times">
+<h2>Times da pelada</h2><p class="muted">Toque no botão de um time para abrir a lista e escolher os jogadores dele (até 4 por time).</p>
+<div class="card"><h3>Goleiros fixos</h3><div id="goalkeeperList"></div></div>
+<div class="card"><h3>Times</h3><div id="teamSummary" class="teamgrid"></div><div class="muted" id="noTeam" style="margin-top:12px"></div></div>
+</section>
+<section class="page" id="partidas">
+<h2>Registrar partida</h2>
+<div class="notice">Informe o placar e selecione o autor de cada gol em uma lista. O sistema credita uma vitória aos jogadores e ao goleiro do lado vencedor; em caso de empate, os dois times em campo saem e os dois da reserva entram.</div>
+<div class="card"><h3>🔄 Rodízio atual</h3><div id="rotationStatus"></div><p class="muted">Ordem inicial sugerida: Azul e Verde jogam; Rosa e Preto ficam na reserva. O resultado registrado atualiza a fila automaticamente.</p></div>
+<div class="card"><form id="matchForm">
+<label for="matchDate">Data da pelada</label><input type="date" id="matchDate" required>
+<label for="teamA">Time A</label><select id="teamA" required></select>
+<label for="teamB">Time B</label><select id="teamB" required></select>
+<div class="grid"><div><label for="scoreA">Gols do Time A</label><input type="number" min="0" max="30" id="scoreA" value="0" required></div><div><label for="scoreB">Gols do Time B</label><input type="number" min="0" max="30" id="scoreB" value="0" required></div></div>
+<div class="card" style="background:#f8fbf8;margin:12px 0"><h3 id="scorerTitleA">⚽ Autores dos gols — Time A</h3><div class="goal-hint">Ajuste o placar acima e escolha um nome para cada gol. Não precisa digitar.</div><div id="scorersA" class="goal-list"></div></div>
+<div class="card" style="background:#f8fbf8;margin:12px 0"><h3 id="scorerTitleB">⚽ Autores dos gols — Time B</h3><div class="goal-hint">Selecione o autor em cada lista. Você pode escolher o mesmo jogador mais de uma vez.</div><div id="scorersB" class="goal-list"></div></div>
+<label for="keeperA">Goleiro do Time A</label><select id="keeperA"></select>
+<label for="keeperB">Goleiro do Time B</label><select id="keeperB"></select>
+<button class="btn">Salvar resultado</button></form></div>
+<div class="card"><h3>Histórico de partidas</h3><div id="matchHistory"></div></div>
+</section>
+<section class="page" id="ranking">
+<h2>Rankings</h2><div class="card"><label for="rankingMonth">Mês de referência</label><input id="rankingMonth" type="month"><div class="muted">As classificações são calculadas com base nos resultados registrados.</div></div>
+<div class="card"><h3>🏆 Ranking de resultados</h3><div id="winsRanking"></div></div>
+<div class="card"><h3>⚽ Artilharia</h3><div id="goalsRanking"></div></div>
+</section>
+<section class="page" id="dados">
+<h2>Dados e segurança</h2>
+<div class="card"><h3>Exportar cópia de segurança</h3><p class="muted">Baixa os jogadores, escalações e partidas em um arquivo JSON.</p><button class="btn" id="exportBtn">Exportar dados</button></div>
+<div class="card"><h3>Importar cópia</h3><p class="muted">Restaura dados de um arquivo exportado anteriormente. Isso substitui os dados atuais deste navegador.</p><input type="file" id="importFile" accept=".json,application/json"><button class="btn secondary" id="importBtn">Importar dados</button></div>
+<div class="card"><h3>Apagar dados</h3><p class="muted">Remove todos os registros salvos neste navegador. Essa ação não pode ser desfeita sem uma cópia de segurança.</p><button class="btn danger" id="clearBtn">Apagar tudo</button></div>
+<div class="notice"><b>Sincronização:</b> seus dados são salvos no Supabase quando há conexão com a internet. Use Exportar dados para manter uma cópia de segurança periódica.</div>
+</section>
+<footer>Pelada do Bilu • Protótipo inicial • Dados salvos localmente neste aparelho</footer>
+</main>
+<div class="modal" id="teamModal" hidden role="dialog" aria-modal="true" aria-labelledby="teamModalTitle"><div class="modal-box">
+<div class="modal-head" id="teamModalHead"><h3 id="teamModalTitle"></h3><button class="btn small" id="teamModalClose" aria-label="Fechar">✕</button></div>
+<div class="modal-info"><div class="modal-count" id="teamModalCount"></div><div class="modal-msg" id="teamModalMsg"></div></div>
+<div class="modal-body"><div class="list" id="teamModalList"></div></div>
+<div class="modal-actions"><button class="btn secondary" id="teamModalClear">Limpar</button><button class="btn" id="teamModalSave">Salvar time</button></div>
+</div></div>
+</div><!-- fim appShell -->
+<script>
+const TEAM_INFO = [
+ {id:'azul',name:'Azul',cls:'blue'},{id:'verde',name:'Verde',cls:'green'},
+ {id:'rosa',name:'Rosa',cls:'pink'},{id:'preto',name:'Preto',cls:'black'}
+];
+const STORE='resenha_fc_v1';
+const SUPABASE_URL='https://aunoslcutzxjknriwlkb.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_LsLnNuocgnPmjdvvhwPKZw_pzImDgbM';
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+let currentUser=null; let cloudQueue=Promise.resolve(); let appInitialized=false;
+const PRELOADED_PLAYERS=['PH','Juan','Jean','Vitin','Guerron','KJ','Allan','Maysson','sorlove','lipe','olhos','mata barca','Igor sete','Bruno','Lucca','caio h'];
+function initialPlayers(){return [...PRELOADED_PLAYERS.map((name,i)=>({id:'pre-'+(i+1),name,goalkeeper:false,active:true})),{id:'keeper-gudofor',name:'Gudofor',goalkeeper:true,active:true}]}
+const defaultState=()=>({players:initialPlayers(),teams:{azul:[],verde:[],rosa:[],preto:[]},matches:[],rotation:{playing:['azul','verde'],reserve:['rosa','preto']}});
+let state=defaultState();
+function loadState(){try{let saved=JSON.parse(localStorage.getItem(STORE));if(!saved)return defaultState();if(!Array.isArray(saved.players)||saved.players.length===0){saved.players=initialPlayers();saved.teams=saved.teams||{azul:[],verde:[],rosa:[],preto:[]}}return saved}catch(e){return defaultState()}}
+function save(){
+ localStorage.setItem(STORE,JSON.stringify(state));
+ render();
+ if(!currentUser)return;
+ const snapshot=JSON.parse(JSON.stringify(state)); const userId=currentUser.id;
+ cloudQueue=cloudQueue.then(async()=>{
+   const {error}=await supabaseClient.from('pelada_app_state').upsert({user_id:userId,data:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+   if(error)throw error;
+   setCloudStatus('✓ Salvo na nuvem');
+ }).catch(err=>{console.error('Falha ao salvar na nuvem:',err);setCloudStatus('⚠ Erro ao salvar na nuvem');});
+}
+function setCloudStatus(message){const el=document.getElementById('cloudStatus');if(el)el.textContent=message}
+async function enterApp(user){
+ currentUser=user;
+ document.getElementById('loginScreen').hidden=true;
+ document.getElementById('appShell').hidden=false;
+ setCloudStatus('Carregando dados…');
+ const {data:row,error}=await supabaseClient.from('pelada_app_state').select('data').eq('user_id',user.id).maybeSingle();
+ if(error){setCloudStatus('Erro ao carregar dados');document.getElementById('appShell').hidden=true;document.getElementById('loginScreen').hidden=false;currentUser=null;alert('Não foi possível carregar os dados da nuvem. Verifique se a tabela e as políticas SQL foram criadas corretamente.');return}
+ if(row && row.data && Array.isArray(row.data.players) && row.data.teams && Array.isArray(row.data.matches)){
+   state=row.data;
+ }else{
+   state=loadState();
+   if(!state.rotation)state.rotation={playing:['azul','verde'],reserve:['rosa','preto']};
+   const {error:saveError}=await supabaseClient.from('pelada_app_state').upsert({user_id:user.id,data:state,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+   if(saveError){setCloudStatus('Erro ao iniciar sincronização');document.getElementById('appShell').hidden=true;document.getElementById('loginScreen').hidden=false;currentUser=null;alert('Não foi possível inicializar os dados na nuvem. Verifique as permissões da tabela.');return}
+ }
+ if(!state.rotation)state.rotation={playing:['azul','verde'],reserve:['rosa','preto']};
+ localStorage.setItem(STORE,JSON.stringify(state));
+ appInitialized=true;render();setCloudStatus('✓ Conectado à nuvem');
+}
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+ e.preventDefault();const button=document.getElementById('loginButton'),err=document.getElementById('loginError');
+ button.disabled=true;button.textContent='Entrando…';err.textContent='';
+ const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;
+ const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+ if(error){err.textContent='Não foi possível entrar. Confira o e-mail e a senha.';button.disabled=false;button.textContent='Entrar';return}
+ try{await enterApp(data.user)}finally{button.disabled=false;button.textContent='Entrar'}
+});
+document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();currentUser=null;appInitialized=false;document.getElementById('appShell').hidden=true;document.getElementById('loginScreen').hidden=false;document.getElementById('loginPassword').value=''});
+(async()=>{const {data,error}=await supabaseClient.auth.getSession();if(!error&&data.session)await enterApp(data.session.user)})();
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function teamName(id){return TEAM_INFO.find(t=>t.id===id)?.name||id}
+function player(id){return state.players.find(p=>p.id===id)}
+function activePlayers(){return state.players.filter(p=>p.active!==false)}
+function keepers(){return activePlayers().filter(p=>p.goalkeeper)}
+function outfield(){return activePlayers().filter(p=>!p.goalkeeper)}
+function fmtDate(s){if(!s)return '';let [y,m,d]=s.split('-');return `${d}/${m}/${y}`}
+function currentMonth(){return new Date().toISOString().slice(0,7)}
+function monthMatches(month){return state.matches.filter(m=>m.date.slice(0,7)===month)}
+function stats(month){let all=monthMatches(month),s={};activePlayers().forEach(p=>s[p.id]={id:p.id,name:p.name,wins:0,draws:0,losses:0,goals:0,games:0,goalkeeper:p.goalkeeper});
+ all.forEach(m=>{[m.teamA,m.teamB].forEach((tid,i)=>{((i===0?m.rosterA:m.rosterB)||state.teams[tid]||[]).forEach(id=>{if(s[id])s[id].games++})});
+  const rA=m.rosterA||state.teams[m.teamA]||[],rB=m.rosterB||state.teams[m.teamB]||[];
+  if(m.scoreA===m.scoreB){
+   [...rA,...rB,m.keeperA,m.keeperB].forEach(id=>{if(s[id])s[id].draws++});
+  } else {
+   const winA=m.scoreA>m.scoreB;
+   [...(winA?rA:rB),winA?m.keeperA:m.keeperB].forEach(id=>{if(s[id])s[id].wins++});
+   [...(winA?rB:rA),winA?m.keeperB:m.keeperA].forEach(id=>{if(s[id])s[id].losses++});
+  }
+  [...(m.scorersA||[]),...(m.scorersB||[])].forEach(id=>{if(s[id])s[id].goals++});
+ });return Object.values(s)}
+function table(rows,metric,label){if(!rows.length)return '<div class="empty">Ainda não há dados para este período.</div>';return `<table><thead><tr><th>#</th><th>Jogador</th><th class="num">${label}</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}${p.goalkeeper?' <small>Goleiro</small>':''}</td><td class="num"><b>${p[metric]}</b></td></tr>`).join('')}</tbody></table>`}
+function byResults(a,b){return b.wins-a.wins||b.draws-a.draws||a.losses-b.losses||a.name.localeCompare(b.name)}
+function resultsTable(rows){if(!rows.length)return '<div class="empty">Ainda não há dados para este período.</div>';return `<table class="restable"><thead><tr><th>#</th><th>Jogador</th><th class="num">Vitórias</th><th class="num">Empates</th><th class="num">Derrotas</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}${p.goalkeeper?' <small>Goleiro</small>':''}</td><td class="num"><b>${p.wins}</b></td><td class="num">${p.draws}</td><td class="num">${p.losses}</td></tr>`).join('')}</tbody></table>`}
+function render(){
+ const month=document.getElementById('rankingMonth')?.value||currentMonth(),ms=monthMatches(month),st=stats(month);
+ document.getElementById('metrics').innerHTML=`<div class="card"><div class="metric">${activePlayers().length}</div><div class="metric-label">Participantes ativos</div></div><div class="card"><div class="metric">${keepers().length}</div><div class="metric-label">Goleiros fixos</div></div><div class="card"><div class="metric">${ms.length}</div><div class="metric-label">Partidas no mês</div></div><div class="card"><div class="metric">${ms.reduce((a,m)=>a+m.scoreA+m.scoreB,0)}</div><div class="metric-label">Gols no mês</div></div>`;
+ document.getElementById('monthLabel').textContent=new Date(month+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ document.getElementById('homeRanking').innerHTML=resultsTable([...st].sort(byResults).slice(0,5));
+ document.getElementById('recentMatches').innerHTML=state.matches.length?state.matches.slice().reverse().slice(0,4).map(matchCard).join(''):'<div class="empty">Registre a primeira partida para ver o histórico.</div>';
+ document.getElementById('playerCount').textContent=activePlayers().length+' ativos';
+ document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item"><div class="grow"><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro fixo':'Jogador de linha'}${p.active===false?' • Inativo':''}</small></div><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn secondary small" onclick="togglePlayer('${p.id}')">${p.active===false?'Ativar':'Inativar'}</button></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
+ document.getElementById('goalkeeperList').innerHTML=keepers().length?keepers().map(p=>`<div class="item"><b>${esc(p.name)}</b><span class="pill">Goleiro fixo</span></div>`).join(''):'<div class="empty">Cadastre os dois goleiros na tela Jogadores.</div>';
+ const rot=state.rotation||{playing:['azul','verde'],reserve:['rosa','preto']};
+ document.getElementById('rotationStatus').innerHTML=`<div class="grid"><div><div class="muted">Em campo</div>${rot.playing.map(t=>`<div class="team ${TEAM_INFO.find(x=>x.id===t)?.cls||''}"><strong>${teamName(t)}</strong></div>`).join('')}</div><div><div class="muted">Na reserva (ordem)</div>${rot.reserve.map((t,i)=>`<div class="item"><span>${i+1}. ${esc(teamName(t))}</span></div>`).join('')}</div></div>`;
+
+ document.getElementById('teamSummary').innerHTML=TEAM_INFO.map(t=>`<div class="team ${t.cls}"><strong>${t.name.toUpperCase()} (${(state.teams[t.id]||[]).length}/${TEAM_LIMIT})</strong><div class="members">${(state.teams[t.id]||[]).map(id=>player(id)?.name).filter(Boolean).map(esc).join(', ')||'Nenhum jogador selecionado'}</div><button type="button" class="btn small" onclick="openTeamModal('${t.id}')">Escolher jogadores do ${esc(t.name)}</button></div>`).join('');
+ const noTeam=outfield().filter(p=>!teamOf(p.id));
+ document.getElementById('noTeam').innerHTML=noTeam.length?'<b>Sem time:</b> '+noTeam.map(p=>esc(p.name)).join(', '):'Todos os jogadores já estão em um time.';
+ const teamOptions=TEAM_INFO.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+ ['teamA','teamB'].forEach(id=>{let el=document.getElementById(id),old=el.value;el.innerHTML=teamOptions;el.value=old||'azul'});
+ ['keeperA','keeperB'].forEach(id=>{let el=document.getElementById(id),old=el.value;el.innerHTML=keepers().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">Cadastre goleiros</option>';if([...el.options].some(o=>o.value===old))el.value=old});
+ document.getElementById('winsRanking').innerHTML=resultsTable([...st].sort(byResults));
+ document.getElementById('goalsRanking').innerHTML=table([...st].sort((a,b)=>b.goals-a.goals||b.wins-a.wins||a.name.localeCompare(b.name)),'goals','Gols');
+ document.getElementById('matchHistory').innerHTML=state.matches.length?state.matches.slice().reverse().map(matchCard).join(''):'<div class="empty">Nenhuma partida registrada.</div>';
+ renderAllScorerPickers(true);
+}
+function renderScorerPickers(side, preserve=true){
+ const score=Number(document.getElementById(side==='A'?'scoreA':'scoreB').value)||0;
+ const teamId=document.getElementById(side==='A'?'teamA':'teamB').value;
+ const container=document.getElementById('scorers'+side);
+ const old=preserve?[...container.querySelectorAll('select')].map(x=>x.value):[];
+ const teamPlayers=(state.teams[teamId]||[]).map(player).filter(p=>p&&p.active!==false);
+ const options=[...teamPlayers,...keepers().filter(g=>!teamPlayers.some(p=>p.id===g.id))];
+ document.getElementById('scorerTitle'+side).textContent=`⚽ Autores dos gols — Time ${teamName(teamId)}`;
+ if(!score){container.innerHTML='<div class="empty">Placar zerado. Quando houver gol, as opções aparecerão aqui.</div>';return}
+ if(!options.length){container.innerHTML='<div class="empty">Cadastre jogadores e salve a escalação dos times antes de registrar os gols.</div>';return}
+ container.innerHTML=Array.from({length:Math.min(score,30)},(_,i)=>`<div class="goal-entry"><div class="goal-number">${i+1}º</div><select aria-label="Autor do gol ${i+1} do Time ${teamName(teamId)}" data-scorer-side="${side}" required><option value="">Selecione quem fez o gol</option>${options.map(p=>`<option value="${p.id}" ${old[i]===p.id?'selected':''}>${esc(p.name)}${p.goalkeeper?' (goleiro)':''}</option>`).join('')}</select></div>`).join('');
+}
+function renderAllScorerPickers(preserve=true){renderScorerPickers('A',preserve);renderScorerPickers('B',preserve)}
+function matchCard(m){return `<div class="item" style="margin-bottom:8px"><div class="grow"><b>${teamName(m.teamA)} ${m.scoreA} × ${m.scoreB} ${teamName(m.teamB)}</b><small>${fmtDate(m.date)} • ${m.scoreA===m.scoreB?'Empate':teamName(m.scoreA>m.scoreB?m.teamA:m.teamB)+' venceu'}</small></div><button class="btn danger small" onclick="deleteMatch('${m.id}')">Excluir</button></div>`}
+function renamePlayer(id){let p=player(id);if(!p)return;let newName=prompt('Digite o novo nome do jogador:',p.name);if(newName===null)return;newName=newName.trim();if(!newName){alert('O nome não pode ficar vazio.');return}if(newName===p.name)return;p.name=newName;save();alert('Nome atualizado com sucesso!')} 
+function togglePlayer(id){let p=player(id);if(!p)return;p.active=p.active===false?true:false;save()}
+function deleteMatch(id){if(!confirm('Excluir esta partida? As estatísticas serão recalculadas.'))return;state.matches=state.matches.filter(m=>m.id!==id);save()}
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.go)));
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'})}
+document.getElementById('playerForm').addEventListener('submit',e=>{e.preventDefault();let name=document.getElementById('playerName').value.trim();if(!name)return;state.players.push({id:crypto.randomUUID(),name,goalkeeper:document.getElementById('isGoalkeeper').checked,active:true});e.target.reset();save()});
+const TEAM_LIMIT=4;let modalTeam=null;
+function teamOf(id){for(const t of TEAM_INFO){if((state.teams[t.id]||[]).includes(id))return t.id}return null}
+function modalChecked(){return [...document.querySelectorAll('#teamModalList input:checked')].map(i=>i.value)}
+function updateModalCount(){const n=modalChecked().length;document.getElementById('teamModalCount').textContent=n+' de '+TEAM_LIMIT+' jogadores selecionados';document.querySelectorAll('#teamModalList .pick').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked))}
+function openTeamModal(teamId){
+ const t=TEAM_INFO.find(x=>x.id===teamId);if(!t)return;modalTeam=teamId;
+ const cur=state.teams[teamId]||[];
+ document.getElementById('teamModalHead').className='modal-head '+t.cls;
+ document.getElementById('teamModalTitle').textContent='Time '+t.name;
+ document.getElementById('teamModalMsg').textContent='';
+ document.getElementById('teamModalList').innerHTML=outfield().map(p=>{const other=teamOf(p.id);return `<label class="pick"><input type="checkbox" value="${p.id}" ${cur.includes(p.id)?'checked':''}><span class="grow">${esc(p.name)}</span>${other&&other!==teamId?`<span class="pill">${esc(teamName(other))}</span>`:''}</label>`}).join('')||'<div class="empty">Cadastre jogadores na tela Jogadores.</div>';
+ updateModalCount();
+ document.getElementById('teamModal').hidden=false;document.body.style.overflow='hidden';
+}
+function closeTeamModal(){document.getElementById('teamModal').hidden=true;document.body.style.overflow='';modalTeam=null}
+document.getElementById('teamModalList').addEventListener('change',e=>{
+ if(e.target.checked&&modalChecked().length>TEAM_LIMIT){e.target.checked=false;document.getElementById('teamModalMsg').textContent='Cada time pode ter no máximo '+TEAM_LIMIT+' jogadores. Desmarque alguém para escolher outro.'}
+ else document.getElementById('teamModalMsg').textContent='';
+ updateModalCount();
+});
+document.getElementById('teamModalClear').addEventListener('click',()=>{document.querySelectorAll('#teamModalList input').forEach(i=>i.checked=false);document.getElementById('teamModalMsg').textContent='';updateModalCount()});
+document.getElementById('teamModalClose').addEventListener('click',closeTeamModal);
+document.getElementById('teamModal').addEventListener('click',e=>{if(e.target.id==='teamModal')closeTeamModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('teamModal').hidden)closeTeamModal()});
+document.getElementById('teamModalSave').addEventListener('click',()=>{
+ if(!modalTeam)return;const ids=modalChecked();
+ const next={azul:[],verde:[],rosa:[],preto:[]};
+ TEAM_INFO.forEach(t=>{next[t.id]=(state.teams[t.id]||[]).filter(id=>!ids.includes(id))});
+ next[modalTeam]=ids;state.teams=next;closeTeamModal();save();
+});
+document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');
+['scoreA','scoreB','teamA','teamB'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderAllScorerPickers(true)));
+document.getElementById('matchForm').addEventListener('submit',e=>{e.preventDefault();let teamA=document.getElementById('teamA').value,teamB=document.getElementById('teamB').value,scoreA=Number(document.getElementById('scoreA').value),scoreB=Number(document.getElementById('scoreB').value);
+ if(teamA===teamB){alert('Escolha dois times diferentes.');return}
+ let scorersA=[...document.querySelectorAll('[data-scorer-side="A"]')].map(el=>el.value),scorersB=[...document.querySelectorAll('[data-scorer-side="B"]')].map(el=>el.value);
+ if(scorersA.length!==scoreA||scorersB.length!==scoreB||scorersA.some(id=>!id)||scorersB.some(id=>!id)){alert('Selecione o autor de cada gol nas listas abaixo do placar.');return}
+ const currentReserve=(state.rotation?.reserve||TEAM_INFO.map(t=>t.id).filter(t=>t!==teamA&&t!==teamB)).filter(t=>t!==teamA&&t!==teamB);
+ const reserveOrder=[...currentReserve,...TEAM_INFO.map(t=>t.id).filter(t=>t!==teamA&&t!==teamB&&!currentReserve.includes(t))];
+ let nextRotation;
+ if(scoreA===scoreB){
+   nextRotation={playing:reserveOrder.slice(0,2),reserve:[teamA,teamB]};
+ } else {
+   const winner=scoreA>scoreB?teamA:teamB, loser=scoreA>scoreB?teamB:teamA;
+   const incoming=reserveOrder[0], remaining=reserveOrder.slice(1);
+   nextRotation={playing:[winner,incoming],reserve:[...remaining,loser]};
+ }
+ state.matches.push({id:crypto.randomUUID(),date:document.getElementById('matchDate').value,teamA,teamB,scoreA,scoreB,scorersA,scorersB,rosterA:[...(state.teams[teamA]||[])],rosterB:[...(state.teams[teamB]||[])],keeperA:document.getElementById('keeperA').value,keeperB:document.getElementById('keeperB').value,rotationAfter:nextRotation});
+ state.rotation=nextRotation;
+ e.target.reset();document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');document.getElementById('scoreA').value=0;document.getElementById('scoreB').value=0;save();alert(scoreA===scoreB?'Empate registrado! Os dois times saíram e os dois da reserva entraram.':'Resultado salvo! O vencedor permanece e o próximo time da reserva entrou. O ranking foi atualizado.');
+});
+document.getElementById('rankingMonth').value=currentMonth();document.getElementById('rankingMonth').addEventListener('change',render);
+document.getElementById('exportBtn').addEventListener('click',()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pelada-do-bilu-backup-'+currentMonth()+'.json';a.click();URL.revokeObjectURL(a.href)});
+document.getElementById('importBtn').addEventListener('click',async()=>{let f=document.getElementById('importFile').files[0];if(!f){alert('Escolha um arquivo JSON.');return}try{let data=JSON.parse(await f.text());if(!Array.isArray(data.players)||!data.teams||!Array.isArray(data.matches))throw Error();if(!confirm('Isso substituirá os dados atuais. Continuar?'))return;state=data;save();alert('Dados importados.')}catch(e){alert('Arquivo inválido ou incompatível.')}});
+document.getElementById('clearBtn').addEventListener('click',()=>{if(confirm('Tem certeza que deseja apagar todos os registros e reiniciar os dados sincronizados? Esta ação não pode ser desfeita sem backup.')){state=defaultState();save()}});
+</script>
+</body></html>
