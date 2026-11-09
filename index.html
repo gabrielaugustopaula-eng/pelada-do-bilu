@@ -34,7 +34,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 @media(min-width:650px){.modal{align-items:center;padding:20px}.modal-box{border-radius:18px}}
 footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 @media(min-width:650px){main{padding:22px 18px}.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.teamgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.team{margin-bottom:0}}
-
 .live-score{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;text-align:center}
 .live-team-name{font-size:14px;font-weight:800}.live-number{font-size:42px;line-height:1.1;font-weight:900;font-variant-numeric:tabular-nums}
 .live-vs{font-size:12px;color:var(--muted);font-weight:800}.live-clock{font-size:36px;font-weight:900;text-align:center;font-variant-numeric:tabular-nums}
@@ -44,7 +43,6 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 .live-player-name{overflow-wrap:anywhere;min-width:0;font-weight:650}.goal-plus{flex:none;width:34px;height:34px;border:0;border-radius:9px;background:var(--green);color:white;font-size:22px;font-weight:800}
 .live-status{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}
 @media(max-width:380px){.live-number{font-size:34px}.live-clock{font-size:32px}.live-columns{gap:5px}.live-column{padding:5px}.live-player{font-size:11px}}
-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -171,7 +169,7 @@ async function enterApp(user){
  if(!state.rotation)state.rotation={playing:['azul','verde'],reserve:['rosa','preto']};
  localStorage.setItem(STORE,JSON.stringify(state));
  appInitialized=true;render();setCloudStatus('✓ Conectado à nuvem');
-  if(state.liveMatch){if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch)updateLiveClock();else{clearInterval(liveTimer);liveTimer=null}},250)}
+ if(state.liveMatch){if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch)updateLiveClock();else{clearInterval(liveTimer);liveTimer=null}},250)}
 }
 document.getElementById('loginForm').addEventListener('submit',async e=>{
  e.preventDefault();const button=document.getElementById('loginButton'),err=document.getElementById('loginError');
@@ -226,9 +224,8 @@ function render(){
  document.getElementById('winsRanking').innerHTML=resultsTable([...st].sort(byResults));
  document.getElementById('goalsRanking').innerHTML=table([...st].sort((a,b)=>b.goals-a.goals||b.wins-a.wins||a.name.localeCompare(b.name)),'goals','Gols');
  document.getElementById('matchHistory').innerHTML=state.matches.length?state.matches.slice().reverse().map(matchCard).join(''):'<div class="empty">Nenhuma partida registrada.</div>';
- renderAllScorerPickers(true);
+ renderLiveMatch();
 }
-
 function rotationTeams(){const r=state.rotation||{playing:['azul','verde']};return Array.isArray(r.playing)&&r.playing.length===2?r.playing:['azul','verde']}
 function renderLiveMatch(){
  const setup=document.getElementById('liveMatchSetup'),active=document.getElementById('liveMatchActive'),finished=document.getElementById('liveMatchFinished');
@@ -265,6 +262,48 @@ function finishLiveMatch(reason){
  document.getElementById('liveMatchBadge').textContent='Partida encerrada';document.getElementById('liveMatchSetup').hidden=true;document.getElementById('liveMatchActive').hidden=true;
  document.getElementById('nextMatchBtn').addEventListener('click',()=>{box.hidden=true;document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');render()});
 }
+
+function matchCard(m){return `<div class="item" style="margin-bottom:8px"><div class="grow"><b>${teamName(m.teamA)} ${m.scoreA} × ${m.scoreB} ${teamName(m.teamB)}</b><small>${fmtDate(m.date)} • ${m.scoreA===m.scoreB?'Empate':teamName(m.scoreA>m.scoreB?m.teamA:m.teamB)+' venceu'}</small></div><button class="btn danger small" onclick="deleteMatch('${m.id}')">Excluir</button></div>`}
+function renamePlayer(id){let p=player(id);if(!p)return;let newName=prompt('Digite o novo nome do jogador:',p.name);if(newName===null)return;newName=newName.trim();if(!newName){alert('O nome não pode ficar vazio.');return}if(newName===p.name)return;p.name=newName;save();alert('Nome atualizado com sucesso!')} 
+function togglePlayer(id){let p=player(id);if(!p)return;p.active=p.active===false?true:false;save()}
+function deleteMatch(id){if(!confirm('Excluir esta partida? As estatísticas serão recalculadas.'))return;state.matches=state.matches.filter(m=>m.id!==id);save()}
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.go)));
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'})}
+document.getElementById('playerForm').addEventListener('submit',e=>{e.preventDefault();let name=document.getElementById('playerName').value.trim();if(!name)return;state.players.push({id:crypto.randomUUID(),name,goalkeeper:document.getElementById('isGoalkeeper').checked,active:true});e.target.reset();save()});
+const TEAM_LIMIT=4;let modalTeam=null;
+function teamOf(id){for(const t of TEAM_INFO){if((state.teams[t.id]||[]).includes(id))return t.id}return null}
+function modalChecked(){return [...document.querySelectorAll('#teamModalList input:checked')].map(i=>i.value)}
+function updateModalCount(){const n=modalChecked().length;document.getElementById('teamModalCount').textContent=n+' de '+TEAM_LIMIT+' jogadores selecionados';document.querySelectorAll('#teamModalList .pick').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked))}
+function openTeamModal(teamId){
+ const t=TEAM_INFO.find(x=>x.id===teamId);if(!t)return;modalTeam=teamId;
+ const cur=state.teams[teamId]||[];
+ document.getElementById('teamModalHead').className='modal-head '+t.cls;
+ document.getElementById('teamModalTitle').textContent='Time '+t.name;
+ document.getElementById('teamModalMsg').textContent='';
+ document.getElementById('teamModalList').innerHTML=outfield().map(p=>{const other=teamOf(p.id);return `<label class="pick"><input type="checkbox" value="${p.id}" ${cur.includes(p.id)?'checked':''}><span class="grow">${esc(p.name)}</span>${other&&other!==teamId?`<span class="pill">${esc(teamName(other))}</span>`:''}</label>`}).join('')||'<div class="empty">Cadastre jogadores na tela Jogadores.</div>';
+ updateModalCount();
+ document.getElementById('teamModal').hidden=false;document.body.style.overflow='hidden';
+}
+function closeTeamModal(){document.getElementById('teamModal').hidden=true;document.body.style.overflow='';modalTeam=null}
+document.getElementById('teamModalList').addEventListener('change',e=>{
+ if(e.target.checked&&modalChecked().length>TEAM_LIMIT){e.target.checked=false;document.getElementById('teamModalMsg').textContent='Cada time pode ter no máximo '+TEAM_LIMIT+' jogadores. Desmarque alguém para escolher outro.'}
+ else document.getElementById('teamModalMsg').textContent='';
+ updateModalCount();
+});
+document.getElementById('teamModalClear').addEventListener('click',()=>{document.querySelectorAll('#teamModalList input').forEach(i=>i.checked=false);document.getElementById('teamModalMsg').textContent='';updateModalCount()});
+document.getElementById('teamModalClose').addEventListener('click',closeTeamModal);
+document.getElementById('teamModal').addEventListener('click',e=>{if(e.target.id==='teamModal')closeTeamModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('teamModal').hidden)closeTeamModal()});
+document.getElementById('teamModalSave').addEventListener('click',()=>{
+ if(!modalTeam)return;const ids=modalChecked();
+ const next={azul:[],verde:[],rosa:[],preto:[]};
+ TEAM_INFO.forEach(t=>{next[t.id]=(state.teams[t.id]||[]).filter(id=>!ids.includes(id))});
+ next[modalTeam]=ids;state.teams=next;closeTeamModal();save();
+});
+document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');
+document.getElementById('startMatchBtn').addEventListener('click',startLiveMatch);
+document.getElementById('liveMatchActive').addEventListener('click',e=>{const b=e.target.closest('[data-live-goal]');if(b)addLiveGoal(b.dataset.liveGoal,b.dataset.player)});
 document.getElementById('rankingMonth').value=currentMonth();document.getElementById('rankingMonth').addEventListener('change',render);
 document.getElementById('exportBtn').addEventListener('click',()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pelada-do-bilu-backup-'+currentMonth()+'.json';a.click();URL.revokeObjectURL(a.href)});
 document.getElementById('importBtn').addEventListener('click',async()=>{let f=document.getElementById('importFile').files[0];if(!f){alert('Escolha um arquivo JSON.');return}try{let data=JSON.parse(await f.text());if(!Array.isArray(data.players)||!data.teams||!Array.isArray(data.matches))throw Error();if(!confirm('Isso substituirá os dados atuais. Continuar?'))return;state=data;save();alert('Dados importados.')}catch(e){alert('Arquivo inválido ou incompatível.')}});
