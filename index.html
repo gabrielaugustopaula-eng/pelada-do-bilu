@@ -41,7 +41,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 .live-column{border:1px solid var(--line);border-radius:12px;padding:8px;min-width:0}.live-column h3{font-size:14px;text-align:center}
 .live-player{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:8px 3px;border-bottom:1px solid var(--line);font-size:12px}
 .live-player-name{overflow-wrap:anywhere;min-width:0;font-weight:650}.goal-plus{flex:none;width:34px;height:34px;border:0;border-radius:9px;background:var(--green);color:white;font-size:22px;font-weight:800}
-.live-status{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}
+.live-status{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}.live-controls{display:flex;gap:8px;margin:10px 0}.live-controls .btn{flex:1}
 @media(max-width:380px){.live-number{font-size:34px}.live-clock{font-size:32px}.live-columns{gap:5px}.live-column{padding:5px}.live-player{font-size:11px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -89,14 +89,15 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 </section>
 <section class="page" id="partidas">
 <h2>Gerenciamento de partidas</h2>
-<div class="card"><h3>🔄 Rodízio atual</h3><div id="rotationStatus"></div><p class="muted">Vitória: vencedor permanece e entra o próximo da reserva. Empate: os dois saem e entram os dois da reserva.</p></div>
+<div class="card"><h3>🔄 Referência do rodízio</h3><div id="rotationStatus"></div><p class="muted">Esta informação é apenas uma referência. Você escolhe manualmente os dois times de cada nova partida; o aplicativo não troca os times automaticamente.</p></div>
 <div class="card" id="liveMatchCard">
 <div class="row between"><h3>⚽ Partida em andamento</h3><span class="pill" id="liveMatchBadge">Aguardando início</span></div>
-<div id="liveMatchSetup"><p class="muted">Os times em campo são definidos pelo rodízio atual.</p>
+<div id="liveMatchSetup"><p class="muted">Selecione manualmente os dois times que vão jogar. O aplicativo não escolherá os próximos automaticamente.</p>
+<div class="grid"><div><label for="matchTeamA">Primeiro time</label><select id="matchTeamA"></select></div><div><label for="matchTeamB">Segundo time</label><select id="matchTeamB"></select></div></div>
 <label for="matchDate">Data da partida</label><input type="date" id="matchDate" required>
 <div class="grid"><div><label for="keeperA">Goleiro do primeiro time</label><select id="keeperA"></select></div><div><label for="keeperB">Goleiro do segundo time</label><select id="keeperB"></select></div></div>
 <button class="btn" id="startMatchBtn" type="button">▶ Iniciar partida</button><div class="muted" id="liveSetupMessage" style="margin-top:8px"></div></div>
-<div id="liveMatchActive" hidden><div class="live-clock" id="liveClock">07:00</div><div class="live-status" id="liveStatus">Vence quem fizer 2 gols ou estiver à frente ao fim do tempo</div>
+<div id="liveMatchActive" hidden><div class="live-clock" id="liveClock">07:00</div><div class="live-controls"><button class="btn secondary" id="pauseMatchBtn" type="button">⏸ Pausar</button></div><div class="live-status" id="liveStatus">Vence quem fizer 2 gols ou estiver à frente ao fim do tempo</div>
 <div class="live-score" style="margin:16px 0"><div><div class="live-team-name" id="liveTeamA"></div><div class="live-number" id="liveScoreA">0</div></div><div class="live-vs">×</div><div><div class="live-team-name" id="liveTeamB"></div><div class="live-number" id="liveScoreB">0</div></div></div>
 <div class="live-columns"><div class="live-column"><h3 id="liveTitleA"></h3><div id="livePlayersA"></div></div><div class="live-column"><h3 id="liveTitleB"></h3><div id="livePlayersB"></div></div></div></div>
 <div id="liveMatchFinished" hidden></div></div>
@@ -169,7 +170,7 @@ async function enterApp(user){
  if(!state.rotation)state.rotation={playing:['azul','verde'],reserve:['rosa','preto']};
  localStorage.setItem(STORE,JSON.stringify(state));
  appInitialized=true;render();setCloudStatus('✓ Conectado à nuvem');
- if(state.liveMatch){if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch)updateLiveClock();else{clearInterval(liveTimer);liveTimer=null}},250)}
+ if(state.liveMatch&&!state.liveMatch.paused){if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250)}
 }
 document.getElementById('loginForm').addEventListener('submit',async e=>{
  e.preventDefault();const button=document.getElementById('loginButton'),err=document.getElementById('loginError');
@@ -215,7 +216,7 @@ function render(){
  document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item"><div class="grow"><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro fixo':'Jogador de linha'}${p.active===false?' • Inativo':''}</small></div><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn secondary small" onclick="togglePlayer('${p.id}')">${p.active===false?'Ativar':'Inativar'}</button></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
  document.getElementById('goalkeeperList').innerHTML=keepers().length?keepers().map(p=>`<div class="item"><b>${esc(p.name)}</b><span class="pill">Goleiro fixo</span></div>`).join(''):'<div class="empty">Cadastre os dois goleiros na tela Jogadores.</div>';
  const rot=state.rotation||{playing:['azul','verde'],reserve:['rosa','preto']};
- document.getElementById('rotationStatus').innerHTML=`<div class="grid"><div><div class="muted">Em campo</div>${rot.playing.map(t=>`<div class="team ${TEAM_INFO.find(x=>x.id===t)?.cls||''}"><strong>${teamName(t)}</strong></div>`).join('')}</div><div><div class="muted">Na reserva (ordem)</div>${rot.reserve.map((t,i)=>`<div class="item"><span>${i+1}. ${esc(teamName(t))}</span></div>`).join('')}</div></div>`;
+ document.getElementById('rotationStatus').innerHTML=`<div class="grid"><div><div class="muted">Últimos times indicados</div>${rot.playing.map(t=>`<div class="team ${TEAM_INFO.find(x=>x.id===t)?.cls||''}"><strong>${teamName(t)}</strong></div>`).join('')}</div><div><div class="muted">Outros times</div>${rot.reserve.map((t,i)=>`<div class="item"><span>${i+1}. ${esc(teamName(t))}</span></div>`).join('')}</div></div>`;
 
  document.getElementById('teamSummary').innerHTML=TEAM_INFO.map(t=>`<div class="team ${t.cls}"><strong>${t.name.toUpperCase()} (${(state.teams[t.id]||[]).length}/${TEAM_LIMIT})</strong><div class="members">${(state.teams[t.id]||[]).map(id=>player(id)?.name).filter(Boolean).map(esc).join(', ')||'Nenhum jogador selecionado'}</div><button type="button" class="btn small" onclick="openTeamModal('${t.id}')">Escolher jogadores do ${esc(t.name)}</button></div>`).join('');
  const noTeam=outfield().filter(p=>!teamOf(p.id));
@@ -231,33 +232,42 @@ function renderLiveMatch(){
  const setup=document.getElementById('liveMatchSetup'),active=document.getElementById('liveMatchActive'),finished=document.getElementById('liveMatchFinished');
  if(!setup||!active||!finished)return;
  const m=state.liveMatch;setup.hidden=!!m;active.hidden=!m;finished.hidden=true;
- document.getElementById('liveMatchBadge').textContent=m?'Em andamento':'Aguardando início';
- if(!m){document.getElementById('liveSetupMessage').textContent=keepers().length<2?'Cadastre os dois goleiros fixos antes de iniciar.':'Times em campo: '+rotationTeams().map(teamName).join(' × ');document.getElementById('startMatchBtn').disabled=keepers().length<2;return}
+ document.getElementById('liveMatchBadge').textContent=m?(m.paused?'Pausada':'Em andamento'):'Aguardando início';
+ if(!m){
+  const a=document.getElementById('matchTeamA'),b=document.getElementById('matchTeamB');
+  const oldA=a.value,oldB=b.value;
+  const opts=TEAM_INFO.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  a.innerHTML=opts;b.innerHTML=opts;
+  a.value=TEAM_INFO.some(t=>t.id===oldA)?oldA:rotationTeams()[0];
+  b.value=TEAM_INFO.some(t=>t.id===oldB)&&oldB!==a.value?oldB:TEAM_INFO.find(t=>t.id!==a.value)?.id||'';
+  document.getElementById('liveSetupMessage').textContent=keepers().length<2?'Cadastre os dois goleiros fixos antes de iniciar.':'Escolha os dois times e os goleiros. Os próximos times serão definidos por você.';
+  document.getElementById('startMatchBtn').disabled=keepers().length<2;return;
+ }
  document.getElementById('liveTeamA').textContent=teamName(m.teamA);document.getElementById('liveTeamB').textContent=teamName(m.teamB);
  document.getElementById('liveTitleA').textContent=teamName(m.teamA);document.getElementById('liveTitleB').textContent=teamName(m.teamB);
  document.getElementById('liveScoreA').textContent=m.scoreA;document.getElementById('liveScoreB').textContent=m.scoreB;
  document.getElementById('livePlayersA').innerHTML=m.rosterA.length?m.rosterA.map(id=>livePlayerRow(id,'A',m)).join(''):'<div class="empty">Nenhum jogador escalado.</div>';
  document.getElementById('livePlayersB').innerHTML=m.rosterB.length?m.rosterB.map(id=>livePlayerRow(id,'B',m)).join(''):'<div class="empty">Nenhum jogador escalado.</div>';
+ document.getElementById('pauseMatchBtn').textContent=m.paused?'▶ Continuar':'⏸ Pausar';
+ document.getElementById('liveStatus').textContent=m.paused?'Cronômetro pausado. Toque em Continuar para retomar.':'Vence quem fizer 2 gols ou estiver à frente ao fim do tempo';
  updateLiveClock();
 }
 function livePlayerRow(id,side,m){const p=player(id);if(!p)return '';const n=(side==='A'?m.scorersA:m.scorersB).filter(x=>x===id).length;return `<div class="live-player"><span class="live-player-name">${esc(p.name)}${n?` <small>⚽ ${n}</small>`:''}</span><button class="goal-plus" type="button" data-live-goal="${side}" data-player="${esc(id)}" aria-label="Adicionar gol para ${esc(p.name)}">+</button></div>`}
-function updateLiveClock(){const m=state.liveMatch;if(!m)return;const left=Math.max(0,Math.ceil((m.endsAt-Date.now())/1000));const clock=document.getElementById('liveClock');if(clock){clock.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');clock.classList.toggle('warning',left<=60)}if(left<=0)finishLiveMatch('tempo')}
+function updateLiveClock(){const m=state.liveMatch;if(!m)return;const left=Math.max(0,Math.ceil(((m.paused?m.remainingMs:(m.endsAt-Date.now()))||0)/1000));const clock=document.getElementById('liveClock');if(clock){clock.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');clock.classList.toggle('warning',left<=60)}if(left<=0&&!m.paused)finishLiveMatch('tempo')}
 function startLiveMatch(){
- if(state.liveMatch)return;const [teamA,teamB]=rotationTeams();if(!teamA||!teamB||teamA===teamB){alert('Confira os times em campo no rodízio.');return}
+ if(state.liveMatch)return;const teamA=document.getElementById('matchTeamA').value,teamB=document.getElementById('matchTeamB').value;if(!teamA||!teamB||teamA===teamB){alert('Selecione dois times diferentes.');return}
  const rosterA=[...(state.teams[teamA]||[])],rosterB=[...(state.teams[teamB]||[])];if(!rosterA.length||!rosterB.length){alert('Escolha os jogadores dos dois times na aba Times antes de iniciar.');return}
  const keeperA=document.getElementById('keeperA').value,keeperB=document.getElementById('keeperB').value;if(!keeperA||!keeperB||keeperA===keeperB){alert('Selecione os dois goleiros fixos.');return}
- const now=Date.now();state.liveMatch={id:crypto.randomUUID(),date:document.getElementById('matchDate').value||new Date().toLocaleDateString('en-CA'),teamA,teamB,scoreA:0,scoreB:0,scorersA:[],scorersB:[],rosterA,rosterB,keeperA,keeperB,startedAt:now,endsAt:now+420000};
- save();if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch)updateLiveClock();else{clearInterval(liveTimer);liveTimer=null}},250);
+ const now=Date.now();state.liveMatch={id:crypto.randomUUID(),date:document.getElementById('matchDate').value||new Date().toLocaleDateString('en-CA'),teamA,teamB,scoreA:0,scoreB:0,scorersA:[],scorersB:[],rosterA,rosterB,keeperA,keeperB,startedAt:now,endsAt:now+420000,remainingMs:420000,paused:false};
+ save();if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250);
 }
+function toggleLivePause(){const m=state.liveMatch;if(!m)return;if(m.paused){m.endsAt=Date.now()+Math.max(0,m.remainingMs||0);m.paused=false;if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250)}else{m.remainingMs=Math.max(0,m.endsAt-Date.now());m.paused=true;if(liveTimer){clearInterval(liveTimer);liveTimer=null}}save();}
 function addLiveGoal(side,id){const m=state.liveMatch;if(!m)return;const roster=side==='A'?m.rosterA:m.rosterB;if(!roster.includes(id)||m.scoreA>=2||m.scoreB>=2)return;if(side==='A'){m.scoreA++;m.scorersA.push(id)}else{m.scoreB++;m.scorersB.push(id)}if(m.scoreA>=2||m.scoreB>=2){finishLiveMatch('dois_gols');return}save()}
 function finishLiveMatch(reason){
  const m=state.liveMatch;if(!m)return;if(liveTimer){clearInterval(liveTimer);liveTimer=null}
- const a=m.teamA,b=m.teamB,res=(state.rotation?.reserve||TEAM_INFO.map(t=>t.id).filter(t=>t!==a&&t!==b)).filter(t=>t!==a&&t!==b);
- const reserve=[...res,...TEAM_INFO.map(t=>t.id).filter(t=>t!==a&&t!==b&&!res.includes(t))];let next;
- if(m.scoreA===m.scoreB)next={playing:reserve.slice(0,2),reserve:[a,b]};
- else{const winA=m.scoreA>m.scoreB,w=winA?a:b,l=winA?b:a;next={playing:[w,reserve[0]],reserve:[...reserve.slice(1),l]}}
- state.matches.push({...m,finishedAt:Date.now(),finishReason:reason,rotationAfter:next});state.rotation=next;state.liveMatch=null;save();
- const msg=m.scoreA===m.scoreB?'Empate! Os dois times saem e entram os dois da reserva.':`${teamName(m.scoreA>m.scoreB?a:b)} venceu! O vencedor permanece e entra o próximo da reserva.`;
+ const a=m.teamA,b=m.teamB;
+ state.matches.push({...m,finishedAt:Date.now(),finishReason:reason});state.liveMatch=null;save();
+ const msg=m.scoreA===m.scoreB?'Empate! Selecione manualmente os times da próxima partida.':`${teamName(m.scoreA>m.scoreB?a:b)} venceu! Selecione manualmente os times da próxima partida.`;
  const box=document.getElementById('liveMatchFinished');box.hidden=false;box.innerHTML=`<div class="card" style="background:#f2f8f3;margin-top:12px"><h3>Partida encerrada</h3><div class="live-score"><div><div class="live-team-name">${esc(teamName(a))}</div><div class="live-number">${m.scoreA}</div></div><div class="live-vs">×</div><div><div class="live-team-name">${esc(teamName(b))}</div><div class="live-number">${m.scoreB}</div></div></div><p class="live-status">${esc(msg)}</p><button class="btn" id="nextMatchBtn" type="button" style="width:100%;margin-top:10px">▶ Preparar próxima partida</button></div>`;
  document.getElementById('liveMatchBadge').textContent='Partida encerrada';document.getElementById('liveMatchSetup').hidden=true;document.getElementById('liveMatchActive').hidden=true;
  document.getElementById('nextMatchBtn').addEventListener('click',()=>{box.hidden=true;document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');render()});
@@ -303,6 +313,7 @@ document.getElementById('teamModalSave').addEventListener('click',()=>{
 });
 document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');
 document.getElementById('startMatchBtn').addEventListener('click',startLiveMatch);
+document.getElementById('pauseMatchBtn').addEventListener('click',toggleLivePause);
 document.getElementById('liveMatchActive').addEventListener('click',e=>{const b=e.target.closest('[data-live-goal]');if(b)addLiveGoal(b.dataset.liveGoal,b.dataset.player)});
 document.getElementById('rankingMonth').value=currentMonth();document.getElementById('rankingMonth').addEventListener('change',render);
 document.getElementById('exportBtn').addEventListener('click',()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pelada-do-bilu-backup-'+currentMonth()+'.json';a.click();URL.revokeObjectURL(a.href)});
