@@ -41,7 +41,8 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 .live-column{border:1px solid var(--line);border-radius:12px;padding:8px;min-width:0}.live-column h3{font-size:14px;text-align:center}
 .live-player{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:8px 3px;border-bottom:1px solid var(--line);font-size:12px}
 .live-player-name{overflow-wrap:anywhere;min-width:0;font-weight:650}.goal-plus{flex:none;width:34px;height:34px;border:0;border-radius:9px;background:var(--green);color:white;font-size:22px;font-weight:800}
-.live-status{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}.live-controls{display:flex;gap:8px;margin:10px 0}.live-controls .btn{flex:1}
+.live-status{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}
+.subtabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}.subtabs button{border:0;border-radius:999px;padding:9px 14px;background:#edf2ee;color:#34443a;font-weight:700}.subtabs button.active{background:var(--green);color:#fff}.presence-row{display:flex;align-items:center;gap:9px}.presence-row input{width:20px;height:20px;flex:none}.player-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.summary-cell{background:#f5f8f5;border-radius:10px;padding:10px}.summary-cell b{display:block;font-size:21px}.live-controls{display:flex;gap:8px;margin:10px 0}.live-controls .btn{flex:1}
 @media(max-width:380px){.live-number{font-size:34px}.live-clock{font-size:32px}.live-columns{gap:5px}.live-column{padding:5px}.live-player{font-size:11px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -80,7 +81,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 <section class="page" id="jogadores">
 <h2>Jogadores</h2>
 <div class="card"><h3>Cadastrar jogador</h3><form id="playerForm"><label for="playerName">Nome do jogador</label><input id="playerName" required maxlength="60" placeholder="Digite o nome completo"><label><input id="isGoalkeeper" type="checkbox"> É um dos goleiros fixos</label><button class="btn">Adicionar jogador</button></form></div>
-<div class="card"><div class="row between"><h3>Lista de participantes</h3><span class="pill" id="playerCount"></span></div><div class="list" id="playerList"></div></div>
+<div class="card"><div class="row between"><div><h3>Presença nesta pelada</h3><div class="muted">Marque quem veio. Quem faltar continua cadastrado.</div></div><span class="pill" id="playerCount"></span></div><div class="list" id="playerList"></div></div>
 </section>
 <section class="page" id="times">
 <h2>Times da pelada</h2><p class="muted">Toque no botão de um time para abrir a lista e escolher os jogadores dele (até 4 por time).</p>
@@ -97,16 +98,14 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 <label for="matchDate">Data da partida</label><input type="date" id="matchDate" required>
 <div class="grid"><div><label for="keeperA">Goleiro do primeiro time</label><select id="keeperA"></select></div><div><label for="keeperB">Goleiro do segundo time</label><select id="keeperB"></select></div></div>
 <button class="btn" id="startMatchBtn" type="button">▶ Iniciar partida</button><div class="muted" id="liveSetupMessage" style="margin-top:8px"></div></div>
-<div id="liveMatchActive" hidden><div class="live-clock" id="liveClock">07:00</div><div class="live-controls"><button class="btn secondary" id="pauseMatchBtn" type="button">⏸ Pausar</button></div><div class="live-status" id="liveStatus">Vence quem fizer 2 gols ou estiver à frente ao fim do tempo</div>
+<div id="liveMatchActive" hidden><div class="live-clock" id="liveClock">07:00</div><div class="live-controls"><button class="btn secondary" id="pauseMatchBtn" type="button">⏸ Pausar</button><button class="btn danger" id="endMatchBtn" type="button">■ Encerrar partida</button></div><div class="live-status" id="liveStatus">Vence quem fizer 2 gols ou estiver à frente ao fim do tempo</div>
 <div class="live-score" style="margin:16px 0"><div><div class="live-team-name" id="liveTeamA"></div><div class="live-number" id="liveScoreA">0</div></div><div class="live-vs">×</div><div><div class="live-team-name" id="liveTeamB"></div><div class="live-number" id="liveScoreB">0</div></div></div>
 <div class="live-columns"><div class="live-column"><h3 id="liveTitleA"></h3><div id="livePlayersA"></div></div><div class="live-column"><h3 id="liveTitleB"></h3><div id="livePlayersB"></div></div></div></div>
 <div id="liveMatchFinished" hidden></div></div>
 <div class="card"><h3>Histórico de partidas</h3><div id="matchHistory"></div></div>
 </section>
 <section class="page" id="ranking">
-<h2>Rankings</h2><div class="card"><label for="rankingMonth">Mês de referência</label><input id="rankingMonth" type="month"><div class="muted">As classificações são calculadas com base nos resultados registrados.</div></div>
-<div class="card"><h3>🏆 Ranking de resultados</h3><div id="winsRanking"></div></div>
-<div class="card"><h3>⚽ Artilharia</h3><div id="goalsRanking"></div></div>
+<h2>Rankings</h2><div class="subtabs" id="rankingTabs"><button type="button" data-period="general" class="active">Geral</button><button type="button" data-period="month">Mês</button><button type="button" data-period="year">Ano</button></div><div class="card" id="rankingFilters" hidden><div id="rankingMonthWrap"><label for="rankingMonth">Mês de referência</label><input id="rankingMonth" type="month"></div><div id="rankingYearWrap"><label for="rankingYear">Ano de referência</label><select id="rankingYear"></select></div><div class="muted">As classificações consideram somente as partidas concluídas no período escolhido.</div></div><div class="card"><h3>📊 Resumo da pelada</h3><div id="rankingSummary"></div></div><div class="card"><h3>🏆 Jogadores de linha</h3><div id="fieldRanking"></div></div><div class="card"><h3>🧤 Goleiros</h3><div id="keeperRanking"></div></div><div class="card"><h3>🎨 Vitórias por time</h3><div id="teamRanking"></div></div><div class="card"><h3>⚽ Artilharia</h3><div id="goalsRanking"></div></div>
 </section>
 <section class="page" id="dados">
 <h2>Dados e segurança</h2>
@@ -168,6 +167,7 @@ async function enterApp(user){
    if(saveError){setCloudStatus('Erro ao iniciar sincronização');document.getElementById('appShell').hidden=true;document.getElementById('loginScreen').hidden=false;currentUser=null;alert('Não foi possível inicializar os dados na nuvem. Verifique as permissões da tabela.');return}
  }
  if(!state.rotation)state.rotation={playing:['azul','verde'],reserve:['rosa','preto']};
+ state.players.forEach(p=>{if(p.present===undefined)p.present=p.active!==false;});
  localStorage.setItem(STORE,JSON.stringify(state));
  appInitialized=true;render();setCloudStatus('✓ Conectado à nuvem');
  if(state.liveMatch&&!state.liveMatch.paused){if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250)}
@@ -185,24 +185,30 @@ document.getElementById('logoutBtn').addEventListener('click',async()=>{await su
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function teamName(id){return TEAM_INFO.find(t=>t.id===id)?.name||id}
 function player(id){return state.players.find(p=>p.id===id)}
-function activePlayers(){return state.players.filter(p=>p.active!==false)}
+function activePlayers(){return state.players.filter(p=>p.present!==false)}
 function keepers(){return activePlayers().filter(p=>p.goalkeeper)}
 function outfield(){return activePlayers().filter(p=>!p.goalkeeper)}
 function fmtDate(s){if(!s)return '';let [y,m,d]=s.split('-');return `${d}/${m}/${y}`}
 function currentMonth(){return new Date().toISOString().slice(0,7)}
 function monthMatches(month){return state.matches.filter(m=>m.date.slice(0,7)===month)}
-function stats(month){let all=monthMatches(month),s={};activePlayers().forEach(p=>s[p.id]={id:p.id,name:p.name,wins:0,draws:0,losses:0,goals:0,games:0,goalkeeper:p.goalkeeper});
- all.forEach(m=>{[m.teamA,m.teamB].forEach((tid,i)=>{((i===0?m.rosterA:m.rosterB)||state.teams[tid]||[]).forEach(id=>{if(s[id])s[id].games++})});
-  const rA=m.rosterA||state.teams[m.teamA]||[],rB=m.rosterB||state.teams[m.teamB]||[];
-  if(m.scoreA===m.scoreB){
-   [...rA,...rB,m.keeperA,m.keeperB].forEach(id=>{if(s[id])s[id].draws++});
-  } else {
-   const winA=m.scoreA>m.scoreB;
-   [...(winA?rA:rB),winA?m.keeperA:m.keeperB].forEach(id=>{if(s[id])s[id].wins++});
-   [...(winA?rB:rA),winA?m.keeperB:m.keeperA].forEach(id=>{if(s[id])s[id].losses++});
-  }
+function calculateStats(all){let s={};state.players.forEach(p=>s[p.id]={id:p.id,name:p.name,wins:0,draws:0,losses:0,goals:0,games:0,goalkeeper:!!p.goalkeeper});
+ all.forEach(m=>{const rA=m.rosterA||state.teams[m.teamA]||[],rB=m.rosterB||state.teams[m.teamB]||[];const participantsA=[...rA,m.keeperA].filter(Boolean),participantsB=[...rB,m.keeperB].filter(Boolean);
+  [...participantsA,...participantsB].forEach(id=>{if(s[id])s[id].games++});
+  if(m.scoreA===m.scoreB){[...participantsA,...participantsB].forEach(id=>{if(s[id])s[id].draws++});}
+  else {const winA=m.scoreA>m.scoreB;[...(winA?participantsA:participantsB)].forEach(id=>{if(s[id])s[id].wins++});[...(winA?participantsB:participantsA)].forEach(id=>{if(s[id])s[id].losses++});}
   [...(m.scorersA||[]),...(m.scorersB||[])].forEach(id=>{if(s[id])s[id].goals++});
  });return Object.values(s)}
+function stats(month){return calculateStats(monthMatches(month))}
+function matchesForPeriod(){if(rankingPeriod==='month'){const v=document.getElementById('rankingMonth').value||currentMonth();return state.matches.filter(m=>(m.date||'').slice(0,7)===v)}if(rankingPeriod==='year'){const y=document.getElementById('rankingYear').value||String(new Date().getFullYear());return state.matches.filter(m=>(m.date||'').slice(0,4)===y)}return state.matches.slice()}
+function teamWins(all){return TEAM_INFO.map(t=>({id:t.id,name:t.name,wins:all.filter(m=>m.scoreA!==m.scoreB&&(m.scoreA>m.scoreB?m.teamA:m.teamB)===t.id).length})).sort((a,b)=>b.wins-a.wins||a.name.localeCompare(b.name))}
+function simpleRanking(rows,metric,label){if(!rows.length)return '<div class="empty">Ainda não há dados para este período.</div>';return `<table><thead><tr><th>#</th><th>Jogador</th><th class="num">Vit.</th><th class="num">Emp.</th><th class="num">Der.</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}</td><td class="num"><b>${p.wins}</b></td><td class="num">${p.draws}</td><td class="num">${p.losses}</td></tr>`).join('')}</tbody></table>`}
+function renderRanking(){const yearEl=document.getElementById('rankingYear');if(yearEl){const old=yearEl.value;const years=[...new Set([new Date().getFullYear(),...state.matches.map(m=>Number((m.date||'').slice(0,4))).filter(Boolean)])].sort((a,b)=>b-a);yearEl.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');if(years.map(String).includes(old))yearEl.value=old;}const all=matchesForPeriod(),st=calculateStats(all),field=st.filter(p=>!p.goalkeeper).sort(byResults),goalkeepers=st.filter(p=>p.goalkeeper).sort(byResults),goals=st.filter(p=>p.goals>0).sort((a,b)=>b.goals-a.goals||byResults(a,b)),teams=teamWins(all),totalGoals=all.reduce((n,m)=>n+(Number(m.scoreA)||0)+(Number(m.scoreB)||0),0),leader=goals[0];
+ document.getElementById('rankingFilters').hidden=rankingPeriod==='general';document.getElementById('rankingMonthWrap').hidden=rankingPeriod!=='month';document.getElementById('rankingYearWrap').hidden=rankingPeriod!=='year';document.querySelectorAll('#rankingTabs button').forEach(b=>b.classList.toggle('active',b.dataset.period===rankingPeriod));
+ document.getElementById('rankingSummary').innerHTML=`<div class="summary-grid"><div class="summary-cell"><b>${all.length}</b><span class="muted">Partidas concluídas</span></div><div class="summary-cell"><b>${totalGoals}</b><span class="muted">Gols</span></div><div class="summary-cell"><b>${teams[0]?.wins||0}</b><span class="muted">Vitórias do time líder</span></div><div class="summary-cell"><b>${leader?esc(leader.name):'—'}</b><span class="muted">Artilheiro${leader?' • '+leader.goals+' gols':''}</span></div></div><p class="muted" style="margin:10px 0 0">${rankingPeriod==='general'?'Histórico completo':rankingPeriod==='month'?new Date((document.getElementById('rankingMonth').value||currentMonth())+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):'Ano '+(document.getElementById('rankingYear').value||new Date().getFullYear())}</p>${state.liveMatch?`<div class="notice" style="margin-top:10px"><b>Partida em andamento:</b> ${esc(teamName(state.liveMatch.teamA))} ${state.liveMatch.scoreA} × ${state.liveMatch.scoreB} ${esc(teamName(state.liveMatch.teamB))}${state.liveMatch.paused?' • Pausada':' • Ao vivo'}</div>`:'<div class="muted" style="margin-top:10px">Nenhuma partida em andamento neste momento.</div>'}`;
+ document.getElementById('fieldRanking').innerHTML=simpleRanking(field);document.getElementById('keeperRanking').innerHTML=simpleRanking(goalkeepers);
+ document.getElementById('teamRanking').innerHTML=teams.length?`<table><thead><tr><th>#</th><th>Time</th><th class="num">Vitórias</th></tr></thead><tbody>${teams.map((t,i)=>`<tr><td>${i+1}</td><td>${esc(t.name)}</td><td class="num"><b>${t.wins}</b></td></tr>`).join('')}</tbody></table>`:'';
+ document.getElementById('goalsRanking').innerHTML=goals.length?table(goals,'goals','Gols'):'<div class="empty">Ainda não há gols registrados neste período.</div>';
+}
 function table(rows,metric,label){if(!rows.length)return '<div class="empty">Ainda não há dados para este período.</div>';return `<table><thead><tr><th>#</th><th>Jogador</th><th class="num">${label}</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}${p.goalkeeper?' <small>Goleiro</small>':''}</td><td class="num"><b>${p[metric]}</b></td></tr>`).join('')}</tbody></table>`}
 function byResults(a,b){return b.wins-a.wins||b.draws-a.draws||a.losses-b.losses||a.name.localeCompare(b.name)}
 function resultsTable(rows){if(!rows.length)return '<div class="empty">Ainda não há dados para este período.</div>';return `<table class="restable"><thead><tr><th>#</th><th>Jogador</th><th class="num">Vitórias</th><th class="num">Empates</th><th class="num">Derrotas</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}${p.goalkeeper?' <small>Goleiro</small>':''}</td><td class="num"><b>${p.wins}</b></td><td class="num">${p.draws}</td><td class="num">${p.losses}</td></tr>`).join('')}</tbody></table>`}
@@ -212,8 +218,8 @@ function render(){
  document.getElementById('monthLabel').textContent=new Date(month+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
  document.getElementById('homeRanking').innerHTML=resultsTable([...st].sort(byResults).slice(0,5));
  document.getElementById('recentMatches').innerHTML=state.matches.length?state.matches.slice().reverse().slice(0,4).map(matchCard).join(''):'<div class="empty">Registre a primeira partida para ver o histórico.</div>';
- document.getElementById('playerCount').textContent=activePlayers().length+' ativos';
- document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item"><div class="grow"><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro fixo':'Jogador de linha'}${p.active===false?' • Inativo':''}</small></div><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn secondary small" onclick="togglePlayer('${p.id}')">${p.active===false?'Ativar':'Inativar'}</button></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
+ document.getElementById('playerCount').textContent=activePlayers().length+' presentes • '+state.players.length+' cadastrados';
+ document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item"><label class="presence-row grow" style="margin:0"><input type="checkbox" ${p.present===false?'':'checked'} onchange="togglePresence('${p.id}')"><span><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro fixo':'Jogador de linha'} • ${p.present===false?'Ausente':'Presente'}</small></span></label><div class="player-actions"><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn danger small" onclick="deletePlayer('${p.id}')">Excluir</button></div></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
  document.getElementById('goalkeeperList').innerHTML=keepers().length?keepers().map(p=>`<div class="item"><b>${esc(p.name)}</b><span class="pill">Goleiro fixo</span></div>`).join(''):'<div class="empty">Cadastre os dois goleiros na tela Jogadores.</div>';
  const rot=state.rotation||{playing:['azul','verde'],reserve:['rosa','preto']};
  document.getElementById('rotationStatus').innerHTML=`<div class="grid"><div><div class="muted">Últimos times indicados</div>${rot.playing.map(t=>`<div class="team ${TEAM_INFO.find(x=>x.id===t)?.cls||''}"><strong>${teamName(t)}</strong></div>`).join('')}</div><div><div class="muted">Outros times</div>${rot.reserve.map((t,i)=>`<div class="item"><span>${i+1}. ${esc(teamName(t))}</span></div>`).join('')}</div></div>`;
@@ -222,8 +228,7 @@ function render(){
  const noTeam=outfield().filter(p=>!teamOf(p.id));
  document.getElementById('noTeam').innerHTML=noTeam.length?'<b>Sem time:</b> '+noTeam.map(p=>esc(p.name)).join(', '):'Todos os jogadores já estão em um time.';
  ['keeperA','keeperB'].forEach(id=>{let el=document.getElementById(id);if(el){let old=el.value;el.innerHTML=keepers().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">Cadastre goleiros</option>';if([...el.options].some(o=>o.value===old))el.value=old}});
- document.getElementById('winsRanking').innerHTML=resultsTable([...st].sort(byResults));
- document.getElementById('goalsRanking').innerHTML=table([...st].sort((a,b)=>b.goals-a.goals||b.wins-a.wins||a.name.localeCompare(b.name)),'goals','Gols');
+ renderRanking();
  document.getElementById('matchHistory').innerHTML=state.matches.length?state.matches.slice().reverse().map(matchCard).join(''):'<div class="empty">Nenhuma partida registrada.</div>';
  renderLiveMatch();
 }
@@ -246,23 +251,25 @@ function renderLiveMatch(){
  document.getElementById('liveTeamA').textContent=teamName(m.teamA);document.getElementById('liveTeamB').textContent=teamName(m.teamB);
  document.getElementById('liveTitleA').textContent=teamName(m.teamA);document.getElementById('liveTitleB').textContent=teamName(m.teamB);
  document.getElementById('liveScoreA').textContent=m.scoreA;document.getElementById('liveScoreB').textContent=m.scoreB;
- document.getElementById('livePlayersA').innerHTML=m.rosterA.length?m.rosterA.map(id=>livePlayerRow(id,'A',m)).join(''):'<div class="empty">Nenhum jogador escalado.</div>';
- document.getElementById('livePlayersB').innerHTML=m.rosterB.length?m.rosterB.map(id=>livePlayerRow(id,'B',m)).join(''):'<div class="empty">Nenhum jogador escalado.</div>';
+ const eligibleA=[...m.rosterA,...(m.keeperA?[m.keeperA]:[])];
+ const eligibleB=[...m.rosterB,...(m.keeperB?[m.keeperB]:[])];
+ document.getElementById('livePlayersA').innerHTML=eligibleA.length?eligibleA.map(id=>livePlayerRow(id,'A',m)).join(''):'<div class="empty">Nenhum jogador escalado.</div>';
+ document.getElementById('livePlayersB').innerHTML=eligibleB.length?eligibleB.map(id=>livePlayerRow(id,'B',m)).join(''):'<div class="empty">Nenhum jogador escalado.</div>'; 
  document.getElementById('pauseMatchBtn').textContent=m.paused?'▶ Continuar':'⏸ Pausar';
  document.getElementById('liveStatus').textContent=m.paused?'Cronômetro pausado. Toque em Continuar para retomar.':'Vence quem fizer 2 gols ou estiver à frente ao fim do tempo';
  updateLiveClock();
 }
-function livePlayerRow(id,side,m){const p=player(id);if(!p)return '';const n=(side==='A'?m.scorersA:m.scorersB).filter(x=>x===id).length;return `<div class="live-player"><span class="live-player-name">${esc(p.name)}${n?` <small>⚽ ${n}</small>`:''}</span><button class="goal-plus" type="button" data-live-goal="${side}" data-player="${esc(id)}" aria-label="Adicionar gol para ${esc(p.name)}">+</button></div>`}
+function livePlayerRow(id,side,m){const p=player(id);if(!p)return '';const n=(side==='A'?m.scorersA:m.scorersB).filter(x=>x===id).length;return `<div class="live-player"><span class="live-player-name">${esc(p.name)}${p.goalkeeper?' <small>🧤 Goleiro</small>':''}${n?` <small>⚽ ${n}</small>`:''}</span><button class="goal-plus" type="button" data-live-goal="${side}" data-player="${esc(id)}" aria-label="Adicionar gol para ${esc(p.name)}">+</button></div>`}
 function updateLiveClock(){const m=state.liveMatch;if(!m)return;const left=Math.max(0,Math.ceil(((m.paused?m.remainingMs:(m.endsAt-Date.now()))||0)/1000));const clock=document.getElementById('liveClock');if(clock){clock.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');clock.classList.toggle('warning',left<=60)}if(left<=0&&!m.paused)finishLiveMatch('tempo')}
 function startLiveMatch(){
  if(state.liveMatch)return;const teamA=document.getElementById('matchTeamA').value,teamB=document.getElementById('matchTeamB').value;if(!teamA||!teamB||teamA===teamB){alert('Selecione dois times diferentes.');return}
- const rosterA=[...(state.teams[teamA]||[])],rosterB=[...(state.teams[teamB]||[])];if(!rosterA.length||!rosterB.length){alert('Escolha os jogadores dos dois times na aba Times antes de iniciar.');return}
+ const rosterA=[...(state.teams[teamA]||[])].filter(id=>player(id)&&player(id).present!==false),rosterB=[...(state.teams[teamB]||[])].filter(id=>player(id)&&player(id).present!==false);if(!rosterA.length||!rosterB.length){alert('Escolha os jogadores dos dois times na aba Times antes de iniciar.');return}
  const keeperA=document.getElementById('keeperA').value,keeperB=document.getElementById('keeperB').value;if(!keeperA||!keeperB||keeperA===keeperB){alert('Selecione os dois goleiros fixos.');return}
  const now=Date.now();state.liveMatch={id:crypto.randomUUID(),date:document.getElementById('matchDate').value||new Date().toLocaleDateString('en-CA'),teamA,teamB,scoreA:0,scoreB:0,scorersA:[],scorersB:[],rosterA,rosterB,keeperA,keeperB,startedAt:now,endsAt:now+420000,remainingMs:420000,paused:false};
  save();if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250);
 }
 function toggleLivePause(){const m=state.liveMatch;if(!m)return;if(m.paused){m.endsAt=Date.now()+Math.max(0,m.remainingMs||0);m.paused=false;if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250)}else{m.remainingMs=Math.max(0,m.endsAt-Date.now());m.paused=true;if(liveTimer){clearInterval(liveTimer);liveTimer=null}}save();}
-function addLiveGoal(side,id){const m=state.liveMatch;if(!m)return;const roster=side==='A'?m.rosterA:m.rosterB;if(!roster.includes(id)||m.scoreA>=2||m.scoreB>=2)return;if(side==='A'){m.scoreA++;m.scorersA.push(id)}else{m.scoreB++;m.scorersB.push(id)}if(m.scoreA>=2||m.scoreB>=2){finishLiveMatch('dois_gols');return}save()}
+function addLiveGoal(side,id){const m=state.liveMatch;if(!m)return;const roster=side==='A'?m.rosterA:m.rosterB;const keeper=side==='A'?m.keeperA:m.keeperB;if(!roster.includes(id)&&keeper!==id)return;if(m.scoreA>=2||m.scoreB>=2)return;if(side==='A'){m.scoreA++;m.scorersA.push(id)}else{m.scoreB++;m.scorersB.push(id)}if(m.scoreA>=2||m.scoreB>=2){finishLiveMatch('dois_gols');return}save()}
 function finishLiveMatch(reason){
  const m=state.liveMatch;if(!m)return;if(liveTimer){clearInterval(liveTimer);liveTimer=null}
  const a=m.teamA,b=m.teamB;
@@ -274,13 +281,14 @@ function finishLiveMatch(reason){
 }
 
 function matchCard(m){return `<div class="item" style="margin-bottom:8px"><div class="grow"><b>${teamName(m.teamA)} ${m.scoreA} × ${m.scoreB} ${teamName(m.teamB)}</b><small>${fmtDate(m.date)} • ${m.scoreA===m.scoreB?'Empate':teamName(m.scoreA>m.scoreB?m.teamA:m.teamB)+' venceu'}</small></div><button class="btn danger small" onclick="deleteMatch('${m.id}')">Excluir</button></div>`}
-function renamePlayer(id){let p=player(id);if(!p)return;let newName=prompt('Digite o novo nome do jogador:',p.name);if(newName===null)return;newName=newName.trim();if(!newName){alert('O nome não pode ficar vazio.');return}if(newName===p.name)return;p.name=newName;save();alert('Nome atualizado com sucesso!')} 
-function togglePlayer(id){let p=player(id);if(!p)return;p.active=p.active===false?true:false;save()}
+function renamePlayer(id){let p=player(id);if(!p)return;let newName=prompt('Digite o novo nome do jogador:',p.name);if(newName===null)return;newName=newName.trim();if(!newName){alert('O nome não pode ficar vazio.');return}if(newName===p.name)return;p.name=newName;save();alert('Nome atualizado com sucesso!')}
+function togglePresence(id){const p=player(id);if(!p)return;p.present=p.present===false;save()}
+function deletePlayer(id){const p=player(id);if(!p)return;if(!confirm('Excluir o cadastro de '+p.name+'? O jogador será removido das escalações, mas as partidas antigas continuarão no histórico.'))return;state.players=state.players.filter(x=>x.id!==id);Object.keys(state.teams||{}).forEach(t=>state.teams[t]=(state.teams[t]||[]).filter(x=>x!==id));if(state.liveMatch){state.liveMatch.rosterA=state.liveMatch.rosterA.filter(x=>x!==id);state.liveMatch.rosterB=state.liveMatch.rosterB.filter(x=>x!==id);if(state.liveMatch.keeperA===id)state.liveMatch.keeperA=null;if(state.liveMatch.keeperB===id)state.liveMatch.keeperB=null;}save()}
 function deleteMatch(id){if(!confirm('Excluir esta partida? As estatísticas serão recalculadas.'))return;state.matches=state.matches.filter(m=>m.id!==id);save()}
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.go)));
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'})}
-document.getElementById('playerForm').addEventListener('submit',e=>{e.preventDefault();let name=document.getElementById('playerName').value.trim();if(!name)return;state.players.push({id:crypto.randomUUID(),name,goalkeeper:document.getElementById('isGoalkeeper').checked,active:true});e.target.reset();save()});
+document.getElementById('playerForm').addEventListener('submit',e=>{e.preventDefault();let name=document.getElementById('playerName').value.trim();if(!name)return;state.players.push({id:crypto.randomUUID(),name,goalkeeper:document.getElementById('isGoalkeeper').checked,active:true,present:true});e.target.reset();save()});
 const TEAM_LIMIT=4;let modalTeam=null;
 function teamOf(id){for(const t of TEAM_INFO){if((state.teams[t.id]||[]).includes(id))return t.id}return null}
 function modalChecked(){return [...document.querySelectorAll('#teamModalList input:checked')].map(i=>i.value)}
@@ -314,8 +322,9 @@ document.getElementById('teamModalSave').addEventListener('click',()=>{
 document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');
 document.getElementById('startMatchBtn').addEventListener('click',startLiveMatch);
 document.getElementById('pauseMatchBtn').addEventListener('click',toggleLivePause);
+document.getElementById('endMatchBtn').addEventListener('click',()=>{if(state.liveMatch&&confirm('Deseja encerrar esta partida agora e registrar o placar atual?'))finishLiveMatch('encerramento_manual')});
 document.getElementById('liveMatchActive').addEventListener('click',e=>{const b=e.target.closest('[data-live-goal]');if(b)addLiveGoal(b.dataset.liveGoal,b.dataset.player)});
-document.getElementById('rankingMonth').value=currentMonth();document.getElementById('rankingMonth').addEventListener('change',render);
+let rankingPeriod='general';document.getElementById('rankingMonth').value=currentMonth();document.getElementById('rankingYear').innerHTML=[...new Set([new Date().getFullYear(),...state.matches.map(m=>Number((m.date||'').slice(0,4))).filter(Boolean)])].sort((a,b)=>b-a).map(y=>`<option value="${y}">${y}</option>`).join('');document.getElementById('rankingTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-period]');if(!b)return;rankingPeriod=b.dataset.period;renderRanking()});document.getElementById('rankingMonth').addEventListener('change',renderRanking);document.getElementById('rankingYear').addEventListener('change',renderRanking);
 document.getElementById('exportBtn').addEventListener('click',()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pelada-do-bilu-backup-'+currentMonth()+'.json';a.click();URL.revokeObjectURL(a.href)});
 document.getElementById('importBtn').addEventListener('click',async()=>{let f=document.getElementById('importFile').files[0];if(!f){alert('Escolha um arquivo JSON.');return}try{let data=JSON.parse(await f.text());if(!Array.isArray(data.players)||!data.teams||!Array.isArray(data.matches))throw Error();if(!confirm('Isso substituirá os dados atuais. Continuar?'))return;state=data;save();alert('Dados importados.')}catch(e){alert('Arquivo inválido ou incompatível.')}});
 document.getElementById('clearBtn').addEventListener('click',()=>{if(confirm('Tem certeza que deseja apagar todos os registros e reiniciar os dados sincronizados? Esta ação não pode ser desfeita sem backup.')){state=defaultState();save()}});
