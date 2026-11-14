@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#10251b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pelada do Bilu">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="manifest" href="./manifest.json">
 <title>Pelada do Bilu — Controle da Pelada</title>
 <style>
 :root{--bg:#f3f6f3;--card:#fff;--ink:#18251d;--muted:#647168;--green:#176b43;--green2:#e3f4e9;--line:#dce5dd;--blue:#1769aa;--pink:#d94f91;--black:#343434;--red:#b42318}
@@ -51,13 +57,14 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
 #loginScreen[hidden]{display:none}#appShell[hidden]{display:none}
 .login-card{width:100%;max-width:420px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 10px 35px rgba(16,37,27,.08)}
-.login-card h1{font-size:24px;margin:0 0 6px}.login-card p{color:var(--muted);font-size:14px;margin:0 0 16px}.login-error{color:var(--red);font-size:13px;min-height:18px;margin-top:8px}.cloud-status{font-size:11px;color:#c8d8ce;margin-top:6px}
+.login-card h1{font-size:24px;margin:0 0 6px}.app-logo{width:66px;height:66px;object-fit:cover;border-radius:15px;border:2px solid #c49a45;box-shadow:0 3px 12px rgba(0,0,0,.25);flex:none}.login-logo{display:block;width:116px;height:116px;object-fit:cover;border-radius:22px;margin:0 auto 14px;border:3px solid #c49a45;box-shadow:0 5px 18px rgba(0,0,0,.18)}.login-card p{color:var(--muted);font-size:14px;margin:0 0 16px}.login-error{color:var(--red);font-size:13px;min-height:18px;margin-top:8px}.cloud-status{font-size:11px;color:#c8d8ce;margin-top:6px}
 </style>
 </head>
 <body>
 <section id="loginScreen">
   <form id="loginForm" class="login-card">
-    <h1>⚽ Pelada do Bilu</h1>
+    <img class="login-logo" src="./icon-512.png" alt="Escudo Pelada do Bilu">
+    <h1>Pelada do Bilu</h1>
     <p>Entre com o usuário administrador criado no Supabase.</p>
     <label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="seu@email.com">
     <label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Sua senha">
@@ -67,7 +74,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
   </form>
 </section>
 <div id="appShell" hidden>
-<header><div class="wrap"><div class="row between"><div><h1>⚽ Pelada do Bilu</h1><p>Controle da pelada • segunda-feira</p><div id="cloudStatus" class="cloud-status">Conectando à nuvem…</div></div><button class="btn small" id="logoutBtn" type="button">Sair</button></div></div></header>
+<header><div class="wrap"><div class="row between"><div class="row" style="gap:13px;min-width:0"><img class="app-logo" src="./icon-192.png" alt="Escudo Pelada do Bilu"><div><h1>Pelada do Bilu</h1><p>Controle da pelada • segunda-feira</p><div id="cloudStatus" class="cloud-status">Conectando à nuvem…</div></div></div><button class="btn small" id="logoutBtn" type="button">Sair</button></div></div></header>
 <nav id="nav">
 <button class="active" data-page="inicio">Início</button><button data-page="jogadores">Jogadores</button><button data-page="times">Times</button><button data-page="partidas">Partidas</button><button data-page="ranking">Ranking</button><button data-page="dados">Dados</button>
 </nav>
