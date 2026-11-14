@@ -41,7 +41,9 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 .live-column{border:1px solid var(--line);border-radius:12px;padding:8px;min-width:0}.live-column h3{font-size:14px;text-align:center}
 .live-player{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:8px 3px;border-bottom:1px solid var(--line);font-size:12px}
 .live-player-name{overflow-wrap:anywhere;min-width:0;font-weight:650}.goal-plus{flex:none;width:34px;height:34px;border:0;border-radius:9px;background:var(--green);color:white;font-size:22px;font-weight:800}
-.live-status{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}.live-controls{display:flex;gap:8px;margin:10px 0}.live-controls .btn{flex:1}
+.live-status{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}
+.subtabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}.subtabs button{border:0;border-radius:999px;padding:9px 14px;background:#edf2ee;color:#34443a;font-weight:700}.subtabs button.active{background:var(--green);color:#fff}.presence-row{display:flex;align-items:center;gap:9px}.presence-row input{width:20px;height:20px;flex:none}.player-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.summary-cell{background:#f5f8f5;border-radius:10px;padding:10px}.summary-cell b{display:block;font-size:21px}.live-controls{display:flex;gap:8px;margin:10px 0}.live-controls .btn{flex:1}
+.team-select-block{margin:12px 0 16px}.team-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.team-choice{border:2px solid transparent;border-radius:12px;padding:13px 10px;color:#fff;font-weight:850;letter-spacing:.3px;cursor:pointer;min-height:48px;opacity:.82;transition:transform .12s,opacity .12s,border-color .12s}.team-choice:active{transform:scale(.98)}.team-choice.selected{opacity:1;border-color:#10251b;box-shadow:0 0 0 2px #fff inset}.team-choice:disabled{opacity:.25;cursor:not-allowed;filter:grayscale(1)}.team-choice.blue{background:var(--blue)}.team-choice.green{background:#27864a}.team-choice.pink{background:var(--pink)}.team-choice.black{background:var(--black)}.keeper-select-grid{margin-top:8px}.keeper-select-grid>div[hidden]{display:none}
 @media(max-width:380px){.live-number{font-size:34px}.live-clock{font-size:32px}.live-columns{gap:5px}.live-column{padding:5px}.live-player{font-size:11px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -80,7 +82,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 <section class="page" id="jogadores">
 <h2>Jogadores</h2>
 <div class="card"><h3>Cadastrar jogador</h3><form id="playerForm"><label for="playerName">Nome do jogador</label><input id="playerName" required maxlength="60" placeholder="Digite o nome completo"><label><input id="isGoalkeeper" type="checkbox"> É um dos goleiros fixos</label><button class="btn">Adicionar jogador</button></form></div>
-<div class="card"><div class="row between"><h3>Lista de participantes</h3><span class="pill" id="playerCount"></span></div><div class="list" id="playerList"></div></div>
+<div class="card"><div class="row between"><div><h3>Presença nesta pelada</h3><div class="muted">Marque quem veio. Quem faltar continua cadastrado.</div></div><span class="pill" id="playerCount"></span></div><div class="list" id="playerList"></div></div>
 </section>
 <section class="page" id="times">
 <h2>Times da pelada</h2><p class="muted">Toque no botão de um time para abrir a lista e escolher os jogadores dele (até 4 por time).</p>
@@ -93,9 +95,10 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 <div class="card" id="liveMatchCard">
 <div class="row between"><h3>⚽ Partida em andamento</h3><span class="pill" id="liveMatchBadge">Aguardando início</span></div>
 <div id="liveMatchSetup"><p class="muted">Selecione manualmente os dois times que vão jogar. O aplicativo não escolherá os próximos automaticamente.</p>
-<div class="grid"><div><label for="matchTeamA">Primeiro time</label><select id="matchTeamA"></select></div><div><label for="matchTeamB">Segundo time</label><select id="matchTeamB"></select></div></div>
+<div class="team-select-block"><label>Primeiro time</label><div class="team-choice-grid" id="teamPickA"></div><input type="hidden" id="matchTeamA"></div>
+<div class="team-select-block"><label>Segundo time</label><div class="team-choice-grid" id="teamPickB"></div><input type="hidden" id="matchTeamB"></div>
 <label for="matchDate">Data da partida</label><input type="date" id="matchDate" required>
-<div class="grid"><div><label for="keeperA">Goleiro do primeiro time</label><select id="keeperA"></select></div><div><label for="keeperB">Goleiro do segundo time</label><select id="keeperB"></select></div></div>
+<div class="grid keeper-select-grid"><div id="keeperAWrap" hidden><label id="keeperALabel" for="keeperA">Goleiro do primeiro time</label><select id="keeperA"></select></div><div id="keeperBWrap" hidden><label id="keeperBLabel" for="keeperB">Goleiro do segundo time</label><select id="keeperB"></select></div></div>
 <button class="btn" id="startMatchBtn" type="button">▶ Iniciar partida</button><div class="muted" id="liveSetupMessage" style="margin-top:8px"></div></div>
 <div id="liveMatchActive" hidden><div class="live-clock" id="liveClock">07:00</div><div class="live-controls"><button class="btn secondary" id="pauseMatchBtn" type="button">⏸ Pausar</button><button class="btn danger" id="endMatchBtn" type="button">■ Encerrar partida</button></div><div class="live-status" id="liveStatus">Vence quem fizer 2 gols ou estiver à frente ao fim do tempo</div>
 <div class="live-score" style="margin:16px 0"><div><div class="live-team-name" id="liveTeamA"></div><div class="live-number" id="liveScoreA">0</div></div><div class="live-vs">×</div><div><div class="live-team-name" id="liveTeamB"></div><div class="live-number" id="liveScoreB">0</div></div></div>
@@ -104,16 +107,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 <div class="card"><h3>Histórico de partidas</h3><div id="matchHistory"></div></div>
 </section>
 <section class="page" id="ranking">
-<h2>Rankings</h2>
-<div class="card"><div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn small" id="periodGeneral" type="button" onclick="setRankingPeriod('general')">Geral</button><button class="btn secondary small" id="periodMonth" type="button" onclick="setRankingPeriod('month')">Mês</button><button class="btn secondary small" id="periodYear" type="button" onclick="setRankingPeriod('year')">Ano</button></div>
-<div id="monthFilter" style="margin-top:12px" hidden><label for="rankingMonth">Mês de referência</label><input id="rankingMonth" type="month"></div>
-<div id="yearFilter" style="margin-top:12px" hidden><label for="rankingYear">Ano de referência</label><input id="rankingYear" type="number" min="2000" max="2100"></div>
-<div class="muted" id="rankingPeriodLabel">Todos os resultados registrados.</div></div>
-<div class="card"><h3>📊 Resumo da pelada</h3><div id="rankingSummary"></div></div>
-<div class="card"><h3>🏆 Jogadores de linha</h3><div id="fieldRanking"></div></div>
-<div class="card"><h3>🧤 Ranking de goleiros</h3><div id="keeperRanking"></div></div>
-<div class="card"><h3>⚽ Artilharia</h3><div id="goalsRanking"></div></div>
-<div class="card"><h3>🎨 Vitórias por time</h3><div id="teamWinsRanking"></div></div>
+<h2>Rankings</h2><div class="subtabs" id="rankingTabs"><button type="button" data-period="general" class="active">Geral</button><button type="button" data-period="month">Mês</button><button type="button" data-period="year">Ano</button></div><div class="card" id="rankingFilters" hidden><div id="rankingMonthWrap"><label for="rankingMonth">Mês de referência</label><input id="rankingMonth" type="month"></div><div id="rankingYearWrap"><label for="rankingYear">Ano de referência</label><select id="rankingYear"></select></div><div class="muted">As classificações consideram somente as partidas concluídas no período escolhido.</div></div><div class="card"><h3>📊 Resumo da pelada</h3><div id="rankingSummary"></div></div><div class="card"><h3>🏆 Jogadores de linha</h3><div id="fieldRanking"></div></div><div class="card"><h3>🧤 Goleiros</h3><div id="keeperRanking"></div></div><div class="card"><h3>🎨 Vitórias por time</h3><div id="teamRanking"></div></div><div class="card"><h3>⚽ Artilharia</h3><div id="goalsRanking"></div></div>
 </section>
 <section class="page" id="dados">
 <h2>Dados e segurança</h2>
@@ -143,7 +137,7 @@ const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHA
 let currentUser=null; let cloudQueue=Promise.resolve(); let appInitialized=false;
 const PRELOADED_PLAYERS=['PH','Juan','Jean','Vitin','Guerron','KJ','Allan','Maysson','sorlove','lipe','olhos','mata barca','Igor sete','Bruno','Lucca','caio h'];
 function initialPlayers(){return [...PRELOADED_PLAYERS.map((name,i)=>({id:'pre-'+(i+1),name,goalkeeper:false,active:true})),{id:'keeper-gudofor',name:'Gudofor',goalkeeper:true,active:true}]}
-const defaultState=()=>({players:initialPlayers(),presentIds:initialPlayers().map(p=>p.id),teams:{azul:[],verde:[],rosa:[],preto:[]},matches:[],rotation:{playing:['azul','verde'],reserve:['rosa','preto']}});
+const defaultState=()=>({players:initialPlayers(),teams:{azul:[],verde:[],rosa:[],preto:[]},matches:[],rotation:{playing:['azul','verde'],reserve:['rosa','preto']}});
 let state=defaultState();
 let liveTimer=null;
 function loadState(){try{let saved=JSON.parse(localStorage.getItem(STORE));if(!saved)return defaultState();if(!Array.isArray(saved.players)||saved.players.length===0){saved.players=initialPlayers();saved.teams=saved.teams||{azul:[],verde:[],rosa:[],preto:[]}}return saved}catch(e){return defaultState()}}
@@ -175,7 +169,7 @@ async function enterApp(user){
    if(saveError){setCloudStatus('Erro ao iniciar sincronização');document.getElementById('appShell').hidden=true;document.getElementById('loginScreen').hidden=false;currentUser=null;alert('Não foi possível inicializar os dados na nuvem. Verifique as permissões da tabela.');return}
  }
  if(!state.rotation)state.rotation={playing:['azul','verde'],reserve:['rosa','preto']};
- if(!Array.isArray(state.presentIds))state.presentIds=state.players.filter(p=>p.active!==false).map(p=>p.id);
+ state.players.forEach(p=>{if(p.present===undefined)p.present=p.active!==false;});
  localStorage.setItem(STORE,JSON.stringify(state));
  appInitialized=true;render();setCloudStatus('✓ Conectado à nuvem');
  if(state.liveMatch&&!state.liveMatch.paused){if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250)}
@@ -193,69 +187,70 @@ document.getElementById('logoutBtn').addEventListener('click',async()=>{await su
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function teamName(id){return TEAM_INFO.find(t=>t.id===id)?.name||id}
 function player(id){return state.players.find(p=>p.id===id)}
-function activePlayers(){return state.players.filter(p=>p.active!==false)}
-function presentPlayers(){if(!Array.isArray(state.presentIds))state.presentIds=activePlayers().map(p=>p.id);return activePlayers().filter(p=>state.presentIds.includes(p.id))}
-function keepers(){return presentPlayers().filter(p=>p.goalkeeper)}
-function outfield(){return presentPlayers().filter(p=>!p.goalkeeper)}
+function activePlayers(){return state.players.filter(p=>p.present!==false)}
+function keepers(){return activePlayers().filter(p=>p.goalkeeper)}
+function outfield(){return activePlayers().filter(p=>!p.goalkeeper)}
 function fmtDate(s){if(!s)return '';let [y,m,d]=s.split('-');return `${d}/${m}/${y}`}
 function currentMonth(){return new Date().toISOString().slice(0,7)}
 function monthMatches(month){return state.matches.filter(m=>m.date.slice(0,7)===month)}
-function statsForMatches(all){let s={};activePlayers().forEach(p=>s[p.id]={id:p.id,name:p.name,wins:0,draws:0,losses:0,goals:0,games:0,goalkeeper:p.goalkeeper});
- all.forEach(m=>{[m.teamA,m.teamB].forEach((tid,i)=>{((i===0?m.rosterA:m.rosterB)||state.teams[tid]||[]).forEach(id=>{if(s[id])s[id].games++})});
-  const rA=m.rosterA||state.teams[m.teamA]||[],rB=m.rosterB||state.teams[m.teamB]||[];
-  if(m.scoreA===m.scoreB){
-   [...rA,...rB,m.keeperA,m.keeperB].forEach(id=>{if(s[id])s[id].draws++});
-  } else {
-   const winA=m.scoreA>m.scoreB;
-   [...(winA?rA:rB),winA?m.keeperA:m.keeperB].forEach(id=>{if(s[id])s[id].wins++});
-   [...(winA?rB:rA),winA?m.keeperB:m.keeperA].forEach(id=>{if(s[id])s[id].losses++});
-  }
+function calculateStats(all){let s={};state.players.forEach(p=>s[p.id]={id:p.id,name:p.name,wins:0,draws:0,losses:0,goals:0,games:0,goalkeeper:!!p.goalkeeper});
+ all.forEach(m=>{const rA=m.rosterA||state.teams[m.teamA]||[],rB=m.rosterB||state.teams[m.teamB]||[];const participantsA=[...rA,m.keeperA].filter(Boolean),participantsB=[...rB,m.keeperB].filter(Boolean);
+  [...participantsA,...participantsB].forEach(id=>{if(s[id])s[id].games++});
+  if(m.scoreA===m.scoreB){[...participantsA,...participantsB].forEach(id=>{if(s[id])s[id].draws++});}
+  else {const winA=m.scoreA>m.scoreB;[...(winA?participantsA:participantsB)].forEach(id=>{if(s[id])s[id].wins++});[...(winA?participantsB:participantsA)].forEach(id=>{if(s[id])s[id].losses++});}
   [...(m.scorersA||[]),...(m.scorersB||[])].forEach(id=>{if(s[id])s[id].goals++});
  });return Object.values(s)}
+function stats(month){return calculateStats(monthMatches(month))}
+function matchesForPeriod(){if(rankingPeriod==='month'){const v=document.getElementById('rankingMonth').value||currentMonth();return state.matches.filter(m=>(m.date||'').slice(0,7)===v)}if(rankingPeriod==='year'){const y=document.getElementById('rankingYear').value||String(new Date().getFullYear());return state.matches.filter(m=>(m.date||'').slice(0,4)===y)}return state.matches.slice()}
+function teamWins(all){return TEAM_INFO.map(t=>({id:t.id,name:t.name,wins:all.filter(m=>m.scoreA!==m.scoreB&&(m.scoreA>m.scoreB?m.teamA:m.teamB)===t.id).length})).sort((a,b)=>b.wins-a.wins||a.name.localeCompare(b.name))}
+function simpleRanking(rows,metric,label){if(!rows.length)return '<div class="empty">Ainda não há dados para este período.</div>';return `<table><thead><tr><th>#</th><th>Jogador</th><th class="num">Vit.</th><th class="num">Emp.</th><th class="num">Der.</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}</td><td class="num"><b>${p.wins}</b></td><td class="num">${p.draws}</td><td class="num">${p.losses}</td></tr>`).join('')}</tbody></table>`}
+function renderRanking(){const yearEl=document.getElementById('rankingYear');if(yearEl){const old=yearEl.value;const years=[...new Set([new Date().getFullYear(),...state.matches.map(m=>Number((m.date||'').slice(0,4))).filter(Boolean)])].sort((a,b)=>b-a);yearEl.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');if(years.map(String).includes(old))yearEl.value=old;}const all=matchesForPeriod(),st=calculateStats(all),field=st.filter(p=>!p.goalkeeper).sort(byResults),goalkeepers=st.filter(p=>p.goalkeeper).sort(byResults),goals=st.filter(p=>p.goals>0).sort((a,b)=>b.goals-a.goals||byResults(a,b)),teams=teamWins(all),totalGoals=all.reduce((n,m)=>n+(Number(m.scoreA)||0)+(Number(m.scoreB)||0),0),leader=goals[0];
+ document.getElementById('rankingFilters').hidden=rankingPeriod==='general';document.getElementById('rankingMonthWrap').hidden=rankingPeriod!=='month';document.getElementById('rankingYearWrap').hidden=rankingPeriod!=='year';document.querySelectorAll('#rankingTabs button').forEach(b=>b.classList.toggle('active',b.dataset.period===rankingPeriod));
+ document.getElementById('rankingSummary').innerHTML=`<div class="summary-grid"><div class="summary-cell"><b>${all.length}</b><span class="muted">Partidas concluídas</span></div><div class="summary-cell"><b>${totalGoals}</b><span class="muted">Gols</span></div><div class="summary-cell"><b>${teams[0]?.wins||0}</b><span class="muted">Vitórias do time líder</span></div><div class="summary-cell"><b>${leader?esc(leader.name):'—'}</b><span class="muted">Artilheiro${leader?' • '+leader.goals+' gols':''}</span></div></div><p class="muted" style="margin:10px 0 0">${rankingPeriod==='general'?'Histórico completo':rankingPeriod==='month'?new Date((document.getElementById('rankingMonth').value||currentMonth())+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):'Ano '+(document.getElementById('rankingYear').value||new Date().getFullYear())}</p>${state.liveMatch?`<div class="notice" style="margin-top:10px"><b>Partida em andamento:</b> ${esc(teamName(state.liveMatch.teamA))} ${state.liveMatch.scoreA} × ${state.liveMatch.scoreB} ${esc(teamName(state.liveMatch.teamB))}${state.liveMatch.paused?' • Pausada':' • Ao vivo'}</div>`:'<div class="muted" style="margin-top:10px">Nenhuma partida em andamento neste momento.</div>'}`;
+ document.getElementById('fieldRanking').innerHTML=simpleRanking(field);document.getElementById('keeperRanking').innerHTML=simpleRanking(goalkeepers);
+ document.getElementById('teamRanking').innerHTML=teams.length?`<table><thead><tr><th>#</th><th>Time</th><th class="num">Vitórias</th></tr></thead><tbody>${teams.map((t,i)=>`<tr><td>${i+1}</td><td>${esc(t.name)}</td><td class="num"><b>${t.wins}</b></td></tr>`).join('')}</tbody></table>`:'';
+ document.getElementById('goalsRanking').innerHTML=goals.length?table(goals,'goals','Gols'):'<div class="empty">Ainda não há gols registrados neste período.</div>';
+}
 function table(rows,metric,label){if(!rows.length)return '<div class="empty">Ainda não há dados para este período.</div>';return `<table><thead><tr><th>#</th><th>Jogador</th><th class="num">${label}</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}${p.goalkeeper?' <small>Goleiro</small>':''}</td><td class="num"><b>${p[metric]}</b></td></tr>`).join('')}</tbody></table>`}
 function byResults(a,b){return b.wins-a.wins||b.draws-a.draws||a.losses-b.losses||a.name.localeCompare(b.name)}
 function resultsTable(rows){if(!rows.length)return '<div class="empty">Ainda não há dados para este período.</div>';return `<table class="restable"><thead><tr><th>#</th><th>Jogador</th><th class="num">Vitórias</th><th class="num">Empates</th><th class="num">Derrotas</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}${p.goalkeeper?' <small>Goleiro</small>':''}</td><td class="num"><b>${p.wins}</b></td><td class="num">${p.draws}</td><td class="num">${p.losses}</td></tr>`).join('')}</tbody></table>`}
-let rankingPeriod='general';
-function setRankingPeriod(period){rankingPeriod=period;render()}
 function render(){
- const month=document.getElementById('rankingMonth')?.value||currentMonth();
- const year=document.getElementById('rankingYear')?.value||String(new Date().getFullYear());
- const periodMatches=rankingPeriod==='month'?monthMatches(month):rankingPeriod==='year'?state.matches.filter(m=>m.date.slice(0,4)===String(year)):state.matches;
- const monthMatchesNow=monthMatches(currentMonth());
- const st=statsForMatches(periodMatches);
- document.getElementById('metrics').innerHTML=`<div class="card"><div class="metric">${activePlayers().length}</div><div class="metric-label">Jogadores cadastrados</div></div><div class="card"><div class="metric">${keepers().length}</div><div class="metric-label">Goleiros presentes</div></div><div class="card"><div class="metric">${monthMatchesNow.length}</div><div class="metric-label">Partidas no mês</div></div><div class="card"><div class="metric">${monthMatchesNow.reduce((a,m)=>a+m.scoreA+m.scoreB,0)}</div><div class="metric-label">Gols no mês</div></div>`;
- document.getElementById('monthLabel').textContent=new Date(currentMonth()+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
- document.getElementById('homeRanking').innerHTML=resultsTable([...statsForMatches(monthMatchesNow)].sort(byResults).slice(0,5));
+ const month=document.getElementById('rankingMonth')?.value||currentMonth(),ms=monthMatches(month),st=stats(month);
+ document.getElementById('metrics').innerHTML=`<div class="card"><div class="metric">${activePlayers().length}</div><div class="metric-label">Participantes ativos</div></div><div class="card"><div class="metric">${keepers().length}</div><div class="metric-label">Goleiros fixos</div></div><div class="card"><div class="metric">${ms.length}</div><div class="metric-label">Partidas no mês</div></div><div class="card"><div class="metric">${ms.reduce((a,m)=>a+m.scoreA+m.scoreB,0)}</div><div class="metric-label">Gols no mês</div></div>`;
+ document.getElementById('monthLabel').textContent=new Date(month+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ document.getElementById('homeRanking').innerHTML=resultsTable([...st].sort(byResults).slice(0,5));
  document.getElementById('recentMatches').innerHTML=state.matches.length?state.matches.slice().reverse().slice(0,4).map(matchCard).join(''):'<div class="empty">Registre a primeira partida para ver o histórico.</div>';
- const presentSet=new Set(presentPlayers().map(p=>p.id));
- document.getElementById('playerCount').textContent=presentPlayers().length+' presentes de '+state.players.length+' cadastrados';
- document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item"><div class="grow"><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro fixo':'Jogador de linha'}</small></div><label style="display:flex;align-items:center;gap:6px;white-space:nowrap"><input type="checkbox" ${presentSet.has(p.id)?'checked':''} onchange="togglePresence('${p.id}',this.checked)"> Presente</label><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn danger small" onclick="deletePlayer('${p.id}')">Excluir</button></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
- document.getElementById('goalkeeperList').innerHTML=keepers().length?keepers().map(p=>`<div class="item"><b>${esc(p.name)}</b><span class="pill">Goleiro fixo</span></div>`).join(''):'<div class="empty">Nenhum goleiro presente. Marque a presença na aba Jogadores.</div>';
+ document.getElementById('playerCount').textContent=activePlayers().length+' presentes • '+state.players.length+' cadastrados';
+ document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item"><label class="presence-row grow" style="margin:0"><input type="checkbox" ${p.present===false?'':'checked'} onchange="togglePresence('${p.id}')"><span><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro fixo':'Jogador de linha'} • ${p.present===false?'Ausente':'Presente'}</small></span></label><div class="player-actions"><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn danger small" onclick="deletePlayer('${p.id}')">Excluir</button></div></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
+ document.getElementById('goalkeeperList').innerHTML=keepers().length?keepers().map(p=>`<div class="item"><b>${esc(p.name)}</b><span class="pill">Goleiro fixo</span></div>`).join(''):'<div class="empty">Cadastre os dois goleiros na tela Jogadores.</div>';
  const rot=state.rotation||{playing:['azul','verde'],reserve:['rosa','preto']};
  document.getElementById('rotationStatus').innerHTML=`<div class="grid"><div><div class="muted">Últimos times indicados</div>${rot.playing.map(t=>`<div class="team ${TEAM_INFO.find(x=>x.id===t)?.cls||''}"><strong>${teamName(t)}</strong></div>`).join('')}</div><div><div class="muted">Outros times</div>${rot.reserve.map((t,i)=>`<div class="item"><span>${i+1}. ${esc(teamName(t))}</span></div>`).join('')}</div></div>`;
+
  document.getElementById('teamSummary').innerHTML=TEAM_INFO.map(t=>`<div class="team ${t.cls}"><strong>${t.name.toUpperCase()} (${(state.teams[t.id]||[]).length}/${TEAM_LIMIT})</strong><div class="members">${(state.teams[t.id]||[]).map(id=>player(id)?.name).filter(Boolean).map(esc).join(', ')||'Nenhum jogador selecionado'}</div><button type="button" class="btn small" onclick="openTeamModal('${t.id}')">Escolher jogadores do ${esc(t.name)}</button></div>`).join('');
  const noTeam=outfield().filter(p=>!teamOf(p.id));
- document.getElementById('noTeam').innerHTML=noTeam.length?'<b>Presentes sem time:</b> '+noTeam.map(p=>esc(p.name)).join(', '):'Todos os jogadores presentes já estão em um time.';
- ['keeperA','keeperB'].forEach(id=>{let el=document.getElementById(id);if(el){let old=el.value;el.innerHTML=keepers().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">Marque goleiros presentes</option>';if([...el.options].some(o=>o.value===old))el.value=old}});
- const sorted=[...st].sort(byResults);
- document.getElementById('goalsRanking').innerHTML=table([...st].sort((a,b)=>b.goals-a.goals||b.wins-a.wins||a.name.localeCompare(b.name)),'goals','Gols');
- document.getElementById('fieldRanking').innerHTML=resultsTable(sorted.filter(p=>!p.goalkeeper));
- document.getElementById('keeperRanking').innerHTML=resultsTable(sorted.filter(p=>p.goalkeeper));
- document.getElementById('goalsRanking').innerHTML=table([...st].sort((a,b)=>b.goals-a.goals||b.wins-a.wins||a.name.localeCompare(b.name)),'goals','Gols');
- const teamWins=TEAM_INFO.map(t=>({name:t.name,wins:periodMatches.filter(m=>m.scoreA!==m.scoreB&&(m.scoreA>m.scoreB?m.teamA:m.teamB)===t.id).length})).sort((a,b)=>b.wins-a.wins);
- document.getElementById('teamWinsRanking').innerHTML=teamWins.length?`<table><thead><tr><th>#</th><th>Time</th><th class="num">Vitórias</th></tr></thead><tbody>${teamWins.map((t,i)=>`<tr><td>${i+1}</td><td>${esc(t.name)}</td><td class="num"><b>${t.wins}</b></td></tr>`).join('')}</tbody></table>`:'';
- const totalGoals=periodMatches.reduce((n,m)=>n+m.scoreA+m.scoreB,0),topScorer=[...st].sort((a,b)=>b.goals-a.goals)[0];
- const periodName=rankingPeriod==='month'?new Date(month+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):rankingPeriod==='year'?year:'Todo o histórico';
- document.getElementById('rankingPeriodLabel').textContent='Período: '+periodName;
- document.getElementById('monthFilter').hidden=rankingPeriod!=='month';document.getElementById('yearFilter').hidden=rankingPeriod!=='year';
- ['general','month','year'].forEach(k=>{const b=document.getElementById('period'+k[0].toUpperCase()+k.slice(1));if(b)b.className='btn small '+(rankingPeriod===k?'':'secondary')});
- const live=state.liveMatch?`<p><b>Partida em andamento:</b> ${esc(teamName(state.liveMatch.teamA))} ${state.liveMatch.scoreA} × ${state.liveMatch.scoreB} ${esc(teamName(state.liveMatch.teamB))}</p>`:'<p>Nenhuma partida em andamento.</p>';
- document.getElementById('rankingSummary').innerHTML=`<div class="grid"><div><div class="metric">${periodMatches.length}</div><div class="metric-label">Partidas concluídas</div></div><div><div class="metric">${totalGoals}</div><div class="metric-label">Gols marcados</div></div><div><div class="metric">${teamWins[0]?.wins||0}</div><div class="metric-label">Vitórias do time líder (${teamWins[0]?.name||'—'})</div></div><div><div class="metric">${topScorer?.goals||0}</div><div class="metric-label">Gols do artilheiro (${topScorer?.name||'—'})</div></div></div>${live}`;
+ document.getElementById('noTeam').innerHTML=noTeam.length?'<b>Sem time:</b> '+noTeam.map(p=>esc(p.name)).join(', '):'Todos os jogadores já estão em um time.';
+ ['keeperA','keeperB'].forEach(id=>{let el=document.getElementById(id);if(el){let old=el.value;el.innerHTML='<option value="">Selecione o goleiro</option>'+keepers().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');if([...el.options].some(o=>o.value===old))el.value=old}});
+ renderRanking();
  document.getElementById('matchHistory').innerHTML=state.matches.length?state.matches.slice().reverse().map(matchCard).join(''):'<div class="empty">Nenhuma partida registrada.</div>';
  renderLiveMatch();
 }
-
 function rotationTeams(){const r=state.rotation||{playing:['azul','verde']};return Array.isArray(r.playing)&&r.playing.length===2?r.playing:['azul','verde']}
+function renderTeamChoices(){
+ const a=document.getElementById('matchTeamA')?.value||'',b=document.getElementById('matchTeamB')?.value||'';
+ for(const side of ['A','B']){
+  const selected=side==='A'?a:b,other=side==='A'?b:a,container=document.getElementById('teamPick'+side);
+  if(!container)continue;
+  container.innerHTML=TEAM_INFO.map(t=>`<button type="button" class="team-choice ${t.cls} ${selected===t.id?'selected':''}" data-pick-side="${side}" data-pick-team="${t.id}" aria-pressed="${selected===t.id}" ${other===t.id?'disabled':''}>${esc(t.name.toUpperCase())}${selected===t.id?' ✓':''}</button>`).join('');
+ }
+}
+function chooseMatchTeam(side,teamId){
+ const own=document.getElementById(side==='A'?'matchTeamA':'matchTeamB');
+ const other=document.getElementById(side==='A'?'matchTeamB':'matchTeamA');
+ if(!own||!other||other.value===teamId)return;
+ own.value=teamId;
+ const keeper=document.getElementById(side==='A'?'keeperA':'keeperB');if(keeper)keeper.value='';
+ renderLiveMatch();
+}
 function renderLiveMatch(){
  const setup=document.getElementById('liveMatchSetup'),active=document.getElementById('liveMatchActive'),finished=document.getElementById('liveMatchFinished');
  if(!setup||!active||!finished)return;
@@ -264,11 +259,17 @@ function renderLiveMatch(){
  if(!m){
   const a=document.getElementById('matchTeamA'),b=document.getElementById('matchTeamB');
   const oldA=a.value,oldB=b.value;
-  const opts=TEAM_INFO.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
-  a.innerHTML=opts;b.innerHTML=opts;
-  a.value=TEAM_INFO.some(t=>t.id===oldA)?oldA:rotationTeams()[0];
-  b.value=TEAM_INFO.some(t=>t.id===oldB)&&oldB!==a.value?oldB:TEAM_INFO.find(t=>t.id!==a.value)?.id||'';
-  document.getElementById('liveSetupMessage').textContent=keepers().length<2?'Cadastre os dois goleiros fixos antes de iniciar.':'Escolha os dois times e os goleiros. Os próximos times serão definidos por você.';
+  a.value=TEAM_INFO.some(t=>t.id===oldA)?oldA:'';
+  b.value=TEAM_INFO.some(t=>t.id===oldB)&&oldB!==a.value?oldB:'';
+  renderTeamChoices();
+  const keeperAWrap=document.getElementById('keeperAWrap'),keeperBWrap=document.getElementById('keeperBWrap');
+  keeperAWrap.hidden=!a.value;keeperBWrap.hidden=!b.value;
+  document.getElementById('keeperALabel').textContent='Goleiro do '+(a.value?teamName(a.value):'primeiro time');
+  document.getElementById('keeperBLabel').textContent='Goleiro do '+(b.value?teamName(b.value):'segundo time');
+  const keeperA=document.getElementById('keeperA'),keeperB=document.getElementById('keeperB');
+  if(a.value&&keeperA.options.length<=1)keeperA.innerHTML='<option value="">Selecione o goleiro</option>'+keepers().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  if(b.value&&keeperB.options.length<=1)keeperB.innerHTML='<option value="">Selecione o goleiro</option>'+keepers().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  document.getElementById('liveSetupMessage').textContent=keepers().length<2?'Cadastre os dois goleiros fixos antes de iniciar.':'Escolha um time em cada coluna; depois indique o goleiro correspondente.';
   document.getElementById('startMatchBtn').disabled=keepers().length<2;return;
  }
  document.getElementById('liveTeamA').textContent=teamName(m.teamA);document.getElementById('liveTeamB').textContent=teamName(m.teamB);
@@ -286,7 +287,7 @@ function livePlayerRow(id,side,m){const p=player(id);if(!p)return '';const n=(si
 function updateLiveClock(){const m=state.liveMatch;if(!m)return;const left=Math.max(0,Math.ceil(((m.paused?m.remainingMs:(m.endsAt-Date.now()))||0)/1000));const clock=document.getElementById('liveClock');if(clock){clock.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');clock.classList.toggle('warning',left<=60)}if(left<=0&&!m.paused)finishLiveMatch('tempo')}
 function startLiveMatch(){
  if(state.liveMatch)return;const teamA=document.getElementById('matchTeamA').value,teamB=document.getElementById('matchTeamB').value;if(!teamA||!teamB||teamA===teamB){alert('Selecione dois times diferentes.');return}
- const presentSet=new Set(presentPlayers().map(p=>p.id));const rosterA=[...(state.teams[teamA]||[])].filter(id=>presentSet.has(id)),rosterB=[...(state.teams[teamB]||[])].filter(id=>presentSet.has(id));if(!rosterA.length||!rosterB.length){alert('Escolha os jogadores dos dois times na aba Times antes de iniciar.');return}
+ const rosterA=[...(state.teams[teamA]||[])].filter(id=>player(id)&&player(id).present!==false),rosterB=[...(state.teams[teamB]||[])].filter(id=>player(id)&&player(id).present!==false);if(!rosterA.length||!rosterB.length){alert('Escolha os jogadores dos dois times na aba Times antes de iniciar.');return}
  const keeperA=document.getElementById('keeperA').value,keeperB=document.getElementById('keeperB').value;if(!keeperA||!keeperB||keeperA===keeperB){alert('Selecione os dois goleiros fixos.');return}
  const now=Date.now();state.liveMatch={id:crypto.randomUUID(),date:document.getElementById('matchDate').value||new Date().toLocaleDateString('en-CA'),teamA,teamB,scoreA:0,scoreB:0,scorersA:[],scorersB:[],rosterA,rosterB,keeperA,keeperB,startedAt:now,endsAt:now+420000,remainingMs:420000,paused:false};
  save();if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250);
@@ -304,14 +305,14 @@ function finishLiveMatch(reason){
 }
 
 function matchCard(m){return `<div class="item" style="margin-bottom:8px"><div class="grow"><b>${teamName(m.teamA)} ${m.scoreA} × ${m.scoreB} ${teamName(m.teamB)}</b><small>${fmtDate(m.date)} • ${m.scoreA===m.scoreB?'Empate':teamName(m.scoreA>m.scoreB?m.teamA:m.teamB)+' venceu'}</small></div><button class="btn danger small" onclick="deleteMatch('${m.id}')">Excluir</button></div>`}
-function renamePlayer(id){let p=player(id);if(!p)return;let newName=prompt('Digite o novo nome do jogador:',p.name);if(newName===null)return;newName=newName.trim();if(!newName){alert('O nome não pode ficar vazio.');return}if(newName===p.name)return;p.name=newName;save();alert('Nome atualizado com sucesso!')} 
-function togglePresence(id,checked){if(!Array.isArray(state.presentIds))state.presentIds=activePlayers().map(p=>p.id);state.presentIds=checked?[...new Set([...state.presentIds,id])]:state.presentIds.filter(x=>x!==id);save()}
-function deletePlayer(id){const p=player(id);if(!p)return;if(!confirm('Excluir o cadastro de '+p.name+'? O histórico das partidas será mantido, mas o jogador deixará de aparecer nos cadastros e rankings.'))return;state.players=state.players.filter(x=>x.id!==id);state.presentIds=(state.presentIds||[]).filter(x=>x!==id);Object.keys(state.teams||{}).forEach(t=>state.teams[t]=(state.teams[t]||[]).filter(x=>x!==id));save()}
+function renamePlayer(id){let p=player(id);if(!p)return;let newName=prompt('Digite o novo nome do jogador:',p.name);if(newName===null)return;newName=newName.trim();if(!newName){alert('O nome não pode ficar vazio.');return}if(newName===p.name)return;p.name=newName;save();alert('Nome atualizado com sucesso!')}
+function togglePresence(id){const p=player(id);if(!p)return;p.present=p.present===false;save()}
+function deletePlayer(id){const p=player(id);if(!p)return;if(!confirm('Excluir o cadastro de '+p.name+'? O jogador será removido das escalações, mas as partidas antigas continuarão no histórico.'))return;state.players=state.players.filter(x=>x.id!==id);Object.keys(state.teams||{}).forEach(t=>state.teams[t]=(state.teams[t]||[]).filter(x=>x!==id));if(state.liveMatch){state.liveMatch.rosterA=state.liveMatch.rosterA.filter(x=>x!==id);state.liveMatch.rosterB=state.liveMatch.rosterB.filter(x=>x!==id);if(state.liveMatch.keeperA===id)state.liveMatch.keeperA=null;if(state.liveMatch.keeperB===id)state.liveMatch.keeperB=null;}save()}
 function deleteMatch(id){if(!confirm('Excluir esta partida? As estatísticas serão recalculadas.'))return;state.matches=state.matches.filter(m=>m.id!==id);save()}
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.go)));
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'})}
-document.getElementById('playerForm').addEventListener('submit',e=>{e.preventDefault();let name=document.getElementById('playerName').value.trim();if(!name)return;const id=crypto.randomUUID();state.players.push({id,name,goalkeeper:document.getElementById('isGoalkeeper').checked,active:true});if(!Array.isArray(state.presentIds))state.presentIds=[];state.presentIds.push(id);e.target.reset();save()});
+document.getElementById('playerForm').addEventListener('submit',e=>{e.preventDefault();let name=document.getElementById('playerName').value.trim();if(!name)return;state.players.push({id:crypto.randomUUID(),name,goalkeeper:document.getElementById('isGoalkeeper').checked,active:true,present:true});e.target.reset();save()});
 const TEAM_LIMIT=4;let modalTeam=null;
 function teamOf(id){for(const t of TEAM_INFO){if((state.teams[t.id]||[]).includes(id))return t.id}return null}
 function modalChecked(){return [...document.querySelectorAll('#teamModalList input:checked')].map(i=>i.value)}
@@ -343,11 +344,12 @@ document.getElementById('teamModalSave').addEventListener('click',()=>{
  next[modalTeam]=ids;state.teams=next;closeTeamModal();save();
 });
 document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');
+document.getElementById('liveMatchSetup').addEventListener('click',e=>{const b=e.target.closest('button[data-pick-side][data-pick-team]');if(b&&!b.disabled)chooseMatchTeam(b.dataset.pickSide,b.dataset.pickTeam)});
 document.getElementById('startMatchBtn').addEventListener('click',startLiveMatch);
 document.getElementById('pauseMatchBtn').addEventListener('click',toggleLivePause);
 document.getElementById('endMatchBtn').addEventListener('click',()=>{if(state.liveMatch&&confirm('Deseja encerrar esta partida agora e registrar o placar atual?'))finishLiveMatch('encerramento_manual')});
 document.getElementById('liveMatchActive').addEventListener('click',e=>{const b=e.target.closest('[data-live-goal]');if(b)addLiveGoal(b.dataset.liveGoal,b.dataset.player)});
-document.getElementById('rankingMonth').value=currentMonth();document.getElementById('rankingMonth').addEventListener('change',render);document.getElementById('rankingYear').value=String(new Date().getFullYear());document.getElementById('rankingYear').addEventListener('change',render);
+let rankingPeriod='general';document.getElementById('rankingMonth').value=currentMonth();document.getElementById('rankingYear').innerHTML=[...new Set([new Date().getFullYear(),...state.matches.map(m=>Number((m.date||'').slice(0,4))).filter(Boolean)])].sort((a,b)=>b-a).map(y=>`<option value="${y}">${y}</option>`).join('');document.getElementById('rankingTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-period]');if(!b)return;rankingPeriod=b.dataset.period;renderRanking()});document.getElementById('rankingMonth').addEventListener('change',renderRanking);document.getElementById('rankingYear').addEventListener('change',renderRanking);
 document.getElementById('exportBtn').addEventListener('click',()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pelada-do-bilu-backup-'+currentMonth()+'.json';a.click();URL.revokeObjectURL(a.href)});
 document.getElementById('importBtn').addEventListener('click',async()=>{let f=document.getElementById('importFile').files[0];if(!f){alert('Escolha um arquivo JSON.');return}try{let data=JSON.parse(await f.text());if(!Array.isArray(data.players)||!data.teams||!Array.isArray(data.matches))throw Error();if(!confirm('Isso substituirá os dados atuais. Continuar?'))return;state=data;save();alert('Dados importados.')}catch(e){alert('Arquivo inválido ou incompatível.')}});
 document.getElementById('clearBtn').addEventListener('click',()=>{if(confirm('Tem certeza que deseja apagar todos os registros e reiniciar os dados sincronizados? Esta ação não pode ser desfeita sem backup.')){state=defaultState();save()}});
