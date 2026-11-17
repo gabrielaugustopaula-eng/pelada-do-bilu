@@ -50,6 +50,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 .live-status{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}
 .subtabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}.subtabs button{border:0;border-radius:999px;padding:9px 14px;background:#edf2ee;color:#34443a;font-weight:700}.subtabs button.active{background:var(--green);color:#fff}.presence-row{display:flex;align-items:center;gap:9px}.presence-row input{width:20px;height:20px;flex:none}.player-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.summary-cell{background:#f5f8f5;border-radius:10px;padding:10px}.summary-cell b{display:block;font-size:21px}.live-controls{display:flex;gap:8px;margin:10px 0}.live-controls .btn{flex:1}
 .team-select-block{margin:12px 0 16px}.team-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.team-choice{border:2px solid transparent;border-radius:12px;padding:13px 10px;color:#fff;font-weight:850;letter-spacing:.3px;cursor:pointer;min-height:48px;opacity:.82;transition:transform .12s,opacity .12s,border-color .12s}.team-choice:active{transform:scale(.98)}.team-choice.selected{opacity:1;border-color:#10251b;box-shadow:0 0 0 2px #fff inset}.team-choice:disabled{opacity:.25;cursor:not-allowed;filter:grayscale(1)}.team-choice.blue{background:var(--blue)}.team-choice.green{background:#27864a}.team-choice.pink{background:var(--pink)}.team-choice.black{background:var(--black)}.keeper-select-grid{margin-top:8px}.keeper-select-grid>div[hidden]{display:none}
+.team-pick-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}.team-pick-summary .pick-slot{border:1px solid var(--line);border-radius:10px;padding:10px;background:#f8faf9;font-size:13px}.team-pick-summary .pick-slot b{display:block;margin-bottom:3px}.keeper-modal-box{max-width:420px}.keeper-modal-box .modal-actions{padding-top:10px}.keeper-modal-box select{width:100%;margin-top:8px}
 @media(max-width:380px){.live-number{font-size:34px}.live-clock{font-size:32px}.live-columns{gap:5px}.live-column{padding:5px}.live-player{font-size:11px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -102,14 +103,13 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 <div class="card" id="liveMatchCard">
 <div class="row between"><h3>⚽ Partida em andamento</h3><span class="pill" id="liveMatchBadge">Aguardando início</span></div>
 <div id="liveMatchSetup"><p class="muted">Selecione manualmente os dois times que vão jogar. O aplicativo não escolherá os próximos automaticamente.</p>
-<div class="team-select-block"><label>Primeiro time</label><div class="team-choice-grid" id="teamPickA"></div><input type="hidden" id="matchTeamA"></div>
-<div class="team-select-block"><label>Segundo time</label><div class="team-choice-grid" id="teamPickB"></div><input type="hidden" id="matchTeamB"></div>
+<div class="team-select-block"><label>Toque em dois times para definir o confronto</label><div class="team-choice-grid" id="teamPickAll"></div><input type="hidden" id="matchTeamA"><input type="hidden" id="matchTeamB"><input type="hidden" id="keeperA"><input type="hidden" id="keeperB"></div>
+<div class="team-pick-summary"><div class="pick-slot"><b>1º time</b><span id="selectedTeamA">Ainda não selecionado</span><small id="selectedKeeperA" class="muted"></small></div><div class="pick-slot"><b>2º time</b><span id="selectedTeamB">Ainda não selecionado</span><small id="selectedKeeperB" class="muted"></small></div></div>
 <label for="matchDate">Data da partida</label><input type="date" id="matchDate" required>
-<div class="grid keeper-select-grid"><div id="keeperAWrap" hidden><label id="keeperALabel" for="keeperA">Goleiro do primeiro time</label><select id="keeperA"></select></div><div id="keeperBWrap" hidden><label id="keeperBLabel" for="keeperB">Goleiro do segundo time</label><select id="keeperB"></select></div></div>
 <button class="btn" id="startMatchBtn" type="button">▶ Iniciar partida</button><div class="muted" id="liveSetupMessage" style="margin-top:8px"></div></div>
 <div id="liveMatchActive" hidden><div class="live-clock" id="liveClock">07:00</div><div class="live-controls"><button class="btn secondary" id="pauseMatchBtn" type="button">⏸ Pausar</button><button class="btn danger" id="endMatchBtn" type="button">■ Encerrar partida</button></div><div class="live-status" id="liveStatus">A partida termina automaticamente quando um time fizer 2 gols. Ao zerar o cronômetro, ela continua ativa até você tocar em Encerrar partida.</div>
 <div class="live-score" style="margin:16px 0"><div><div class="live-team-name" id="liveTeamA"></div><div class="live-number" id="liveScoreA">0</div></div><div class="live-vs">×</div><div><div class="live-team-name" id="liveTeamB"></div><div class="live-number" id="liveScoreB">0</div></div></div>
-<div class="live-columns"><div class="live-column"><h3 id="liveTitleA"></h3><div id="livePlayersA"></div><button class="btn secondary small" type="button" data-own-goal="A" style="width:100%;margin-top:8px">Gol contra do time</button></div><div class="live-column"><h3 id="liveTitleB"></h3><div id="livePlayersB"></div><button class="btn secondary small" type="button" data-own-goal="B" style="width:100%;margin-top:8px">Gol contra do time</button></div></div><p class="muted" style="margin:8px 0 0">Gol contra soma para o time adversário e não é atribuído a nenhum jogador.</p></div>
+<div class="live-columns"><div class="live-column"><h3 id="liveTitleA"></h3><div id="livePlayersA"></div><button class="btn secondary small" type="button" data-own-goal="A" style="width:100%;margin-top:8px">Gol contra do time</button></div><div class="live-column"><h3 id="liveTitleB"></h3><div id="livePlayersB"></div><button class="btn secondary small" type="button" data-own-goal="B" style="width:100%;margin-top:8px">Gol contra do time</button></div></div><button class="btn secondary" id="openExtraScorer" type="button" style="width:100%;margin-top:12px">＋ Outro jogador (substituto)</button><p class="muted" style="margin:8px 0 0">Gol contra soma para o time adversário e não é atribuído a nenhum jogador. Use “Outro jogador” para registrar gols de substitutos ou participantes fora da escalação inicial.</p></div>
 <div id="liveMatchFinished" hidden></div></div>
 <div class="card"><h3>Histórico de partidas</h3><div id="matchHistory"></div></div>
 </section>
@@ -131,6 +131,8 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 <div class="modal-body"><div class="list" id="teamModalList"></div></div>
 <div class="modal-actions"><button class="btn secondary" id="teamModalClear">Limpar</button><button class="btn" id="teamModalSave">Salvar time</button></div>
 </div></div>
+<div class="modal" id="keeperModal" hidden role="dialog" aria-modal="true" aria-labelledby="keeperModalTitle"><div class="modal-box keeper-modal-box"><div class="modal-head" id="keeperModalHead"><h3 id="keeperModalTitle">Escolher goleiro</h3><button class="btn small" id="keeperModalClose" type="button" aria-label="Fechar">✕</button></div><div class="modal-body"><p id="keeperModalDescription" class="muted">Selecione o goleiro deste time.</p><label for="keeperModalSelect">Goleiro</label><select id="keeperModalSelect"></select><div id="keeperModalMessage" class="modal-msg"></div></div><div class="modal-actions"><button class="btn secondary" id="keeperModalCancel" type="button">Cancelar</button><button class="btn" id="keeperModalSave" type="button">Confirmar time</button></div></div></div>
+<div class="modal" id="extraScorerModal" hidden role="dialog" aria-modal="true" aria-labelledby="extraScorerTitle"><div class="modal-box keeper-modal-box"><div class="modal-head" style="background:var(--green)"><h3 id="extraScorerTitle">Outro jogador / substituto</h3><button class="btn small" id="extraScorerClose" type="button" aria-label="Fechar">✕</button></div><div class="modal-body"><p class="muted">Selecione qualquer participante presente, inclusive quem entrou como substituto.</p><label for="extraScorerSelect">Jogador</label><select id="extraScorerSelect"></select><div id="extraScorerMessage" class="modal-msg"></div></div><div class="modal-actions"><button class="btn secondary" id="extraGoalA" type="button">Gol do time A</button><button class="btn" id="extraGoalB" type="button">Gol do time B</button></div></div></div>
 </div><!-- fim appShell -->
 <script>
 const TEAM_INFO = [
@@ -228,7 +230,7 @@ function render(){
  document.getElementById('homeRanking').innerHTML=resultsTable([...st].sort(byResults).slice(0,5));
  document.getElementById('recentMatches').innerHTML=state.matches.length?state.matches.slice().reverse().slice(0,4).map(matchCard).join(''):'<div class="empty">Registre a primeira partida para ver o histórico.</div>';
  document.getElementById('playerCount').textContent=activePlayers().length+' presentes • '+state.players.length+' cadastrados';
- document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item"><label class="presence-row grow" style="margin:0"><input type="checkbox" ${p.present===false?'':'checked'} onchange="togglePresence('${p.id}')"><span><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro fixo':'Jogador de linha'} • ${p.present===false?'Ausente':'Presente'}</small></span></label><div class="player-actions"><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn danger small" onclick="deletePlayer('${p.id}')">Excluir</button></div></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
+ document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item"><label class="presence-row grow" style="margin:0"><input type="checkbox" ${p.present===false?'':'checked'} onchange="togglePresence('${p.id}')"><span><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro':'Jogador de linha'} • ${p.present===false?'Ausente':'Presente'}</small></span></label><div class="player-actions"><button class="btn secondary small" onclick="togglePlayerRole('${p.id}')">Mudar para ${p.goalkeeper?'linha':'goleiro'}</button><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn danger small" onclick="deletePlayer('${p.id}')">Excluir</button></div></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
  document.getElementById('goalkeeperList').innerHTML=keepers().length?keepers().map(p=>`<div class="item"><b>${esc(p.name)}</b><span class="pill">Goleiro fixo</span></div>`).join(''):'<div class="empty">Cadastre os dois goleiros na tela Jogadores.</div>';
  const rot=state.rotation||{playing:['azul','verde'],reserve:['rosa','preto']};
  document.getElementById('rotationStatus').innerHTML=`<div class="grid"><div><div class="muted">Últimos times indicados</div>${rot.playing.map(t=>`<div class="team ${TEAM_INFO.find(x=>x.id===t)?.cls||''}"><strong>${teamName(t)}</strong></div>`).join('')}</div><div><div class="muted">Outros times</div>${rot.reserve.map((t,i)=>`<div class="item"><span>${i+1}. ${esc(teamName(t))}</span></div>`).join('')}</div></div>`;
@@ -242,21 +244,45 @@ function render(){
  renderLiveMatch();
 }
 function rotationTeams(){const r=state.rotation||{playing:['azul','verde']};return Array.isArray(r.playing)&&r.playing.length===2?r.playing:['azul','verde']}
+let pendingMatchTeam=null;
 function renderTeamChoices(){
  const a=document.getElementById('matchTeamA')?.value||'',b=document.getElementById('matchTeamB')?.value||'';
- for(const side of ['A','B']){
-  const selected=side==='A'?a:b,other=side==='A'?b:a,container=document.getElementById('teamPick'+side);
-  if(!container)continue;
-  container.innerHTML=TEAM_INFO.map(t=>`<button type="button" class="team-choice ${t.cls} ${selected===t.id?'selected':''}" data-pick-side="${side}" data-pick-team="${t.id}" aria-pressed="${selected===t.id}" ${other===t.id?'disabled':''}>${esc(t.name.toUpperCase())}${selected===t.id?' ✓':''}</button>`).join('');
- }
+ const container=document.getElementById('teamPickAll');if(!container)return;
+ container.innerHTML=TEAM_INFO.map(t=>{const side=a===t.id?'A':b===t.id?'B':'';const keeper=side?document.getElementById(side==='A'?'keeperA':'keeperB').value:'';const keeperName=keeper?player(keeper)?.name:'';return `<button type="button" class="team-choice ${t.cls} ${side?'selected':''}" data-pick-team="${t.id}" aria-pressed="${!!side}">${esc(t.name.toUpperCase())}${side?` ✓<small style="display:block;font-weight:500">${side==='A'?'1º time':'2º time'}${keeperName?' • '+esc(keeperName):''}</small>`:''}</button>`}).join('');
+ document.getElementById('selectedTeamA').textContent=a?teamName(a):'Ainda não selecionado';
+ document.getElementById('selectedTeamB').textContent=b?teamName(b):'Ainda não selecionado';
+ document.getElementById('selectedKeeperA').textContent=a&&document.getElementById('keeperA').value?'🧤 '+player(document.getElementById('keeperA').value)?.name:'Goleiro não escolhido';
+ document.getElementById('selectedKeeperB').textContent=b&&document.getElementById('keeperB').value?'🧤 '+player(document.getElementById('keeperB').value)?.name:'Goleiro não escolhido';
 }
-function chooseMatchTeam(side,teamId){
- const own=document.getElementById(side==='A'?'matchTeamA':'matchTeamB');
- const other=document.getElementById(side==='A'?'matchTeamB':'matchTeamA');
- if(!own||!other||other.value===teamId)return;
- own.value=teamId;
- const keeper=document.getElementById(side==='A'?'keeperA':'keeperB');if(keeper)keeper.value='';
- renderLiveMatch();
+function chooseMatchTeam(teamId){
+ const a=document.getElementById('matchTeamA'),b=document.getElementById('matchTeamB');
+ let side=a.value===teamId?'A':b.value===teamId?'B':!a.value?'A':!b.value?'B':'';
+ if(side&&((side==='A'?a:b).value===teamId)){
+  (side==='A'?a:b).value='';document.getElementById(side==='A'?'keeperA':'keeperB').value='';renderTeamChoices();
+  document.getElementById('liveSetupMessage').textContent='Vaga liberada. Agora escolha outro time para esse confronto.';document.getElementById('startMatchBtn').disabled=true;return;
+ }
+ if(!side){document.getElementById('liveSetupMessage').textContent='Para trocar um time, toque primeiro no botão do time selecionado para liberar a vaga.';return}
+ pendingMatchTeam={side,teamId};
+ const oldKeeper=document.getElementById(side==='A'?'keeperA':'keeperB').value;
+ const select=document.getElementById('keeperModalSelect');
+ select.innerHTML='<option value="">Selecione o goleiro</option>'+keepers().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+ if(oldKeeper&&[...select.options].some(o=>o.value===oldKeeper))select.value=oldKeeper;
+ document.getElementById('keeperModalTitle').textContent='Goleiro do time '+teamName(teamId);
+ document.getElementById('keeperModalDescription').textContent='Você selecionou o time '+teamName(teamId)+'. Agora escolha o goleiro que vai jogar por ele.';
+ document.getElementById('keeperModalMessage').textContent=keepers().length<2?'Cadastre os dois goleiros fixos na aba Jogadores.':'';
+ document.getElementById('keeperModal').hidden=false;document.body.style.overflow='hidden';
+}
+function closeKeeperModal(){document.getElementById('keeperModal').hidden=true;document.body.style.overflow='';pendingMatchTeam=null}
+function confirmMatchTeam(){
+ if(!pendingMatchTeam)return;const keeperId=document.getElementById('keeperModalSelect').value;
+ if(!keeperId){document.getElementById('keeperModalMessage').textContent='Selecione um goleiro para continuar.';return}
+ const {side,teamId}=pendingMatchTeam,otherSide=side==='A'?'B':'A';
+ if(keeperId===document.getElementById(otherSide==='A'?'keeperA':'keeperB').value){document.getElementById('keeperModalMessage').textContent='Escolha um goleiro diferente do outro time.';return}
+ document.getElementById(side==='A'?'matchTeamA':'matchTeamB').value=teamId;
+ document.getElementById(side==='A'?'keeperA':'keeperB').value=keeperId;
+ closeKeeperModal();renderTeamChoices();
+ document.getElementById('liveSetupMessage').textContent=document.getElementById('matchTeamA').value&&document.getElementById('matchTeamB').value?'Dois times e seus goleiros selecionados. Pronto para iniciar!':'Agora selecione o segundo time.';
+ document.getElementById('startMatchBtn').disabled=!(document.getElementById('matchTeamA').value&&document.getElementById('matchTeamB').value&&keepers().length>=2);
 }
 function renderLiveMatch(){
  const setup=document.getElementById('liveMatchSetup'),active=document.getElementById('liveMatchActive'),finished=document.getElementById('liveMatchFinished');
@@ -264,20 +290,10 @@ function renderLiveMatch(){
  const m=state.liveMatch;setup.hidden=!!m;active.hidden=!m;finished.hidden=true;
  document.getElementById('liveMatchBadge').textContent=m?(m.paused?'Pausada':'Em andamento'):'Aguardando início';
  if(!m){
-  const a=document.getElementById('matchTeamA'),b=document.getElementById('matchTeamB');
-  const oldA=a.value,oldB=b.value;
-  a.value=TEAM_INFO.some(t=>t.id===oldA)?oldA:'';
-  b.value=TEAM_INFO.some(t=>t.id===oldB)&&oldB!==a.value?oldB:'';
   renderTeamChoices();
-  const keeperAWrap=document.getElementById('keeperAWrap'),keeperBWrap=document.getElementById('keeperBWrap');
-  keeperAWrap.hidden=!a.value;keeperBWrap.hidden=!b.value;
-  document.getElementById('keeperALabel').textContent='Goleiro do '+(a.value?teamName(a.value):'primeiro time');
-  document.getElementById('keeperBLabel').textContent='Goleiro do '+(b.value?teamName(b.value):'segundo time');
-  const keeperA=document.getElementById('keeperA'),keeperB=document.getElementById('keeperB');
-  if(a.value&&keeperA.options.length<=1)keeperA.innerHTML='<option value="">Selecione o goleiro</option>'+keepers().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
-  if(b.value&&keeperB.options.length<=1)keeperB.innerHTML='<option value="">Selecione o goleiro</option>'+keepers().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
-  document.getElementById('liveSetupMessage').textContent=keepers().length<2?'Cadastre os dois goleiros fixos antes de iniciar.':'Escolha um time em cada coluna; depois indique o goleiro correspondente.';
-  document.getElementById('startMatchBtn').disabled=keepers().length<2;return;
+  const a=document.getElementById('matchTeamA').value,b=document.getElementById('matchTeamB').value;
+  document.getElementById('liveSetupMessage').textContent=keepers().length<2?'Cadastre os dois goleiros fixos antes de iniciar.':a&&b?'Dois times e seus goleiros selecionados. Pronto para iniciar!':a?'Agora selecione o segundo time.':'Escolha o primeiro time; em seguida o aplicativo pedirá o goleiro.';
+  document.getElementById('startMatchBtn').disabled=keepers().length<2||!a||!b||!document.getElementById('keeperA').value||!document.getElementById('keeperB').value;return;
  }
  document.getElementById('liveTeamA').textContent=teamName(m.teamA);document.getElementById('liveTeamB').textContent=teamName(m.teamB);
  document.getElementById('liveTitleA').textContent=teamName(m.teamA);document.getElementById('liveTitleB').textContent=teamName(m.teamB);
@@ -295,12 +311,15 @@ function updateLiveClock(){const m=state.liveMatch;if(!m)return;const left=Math.
 function startLiveMatch(){
  if(state.liveMatch)return;const teamA=document.getElementById('matchTeamA').value,teamB=document.getElementById('matchTeamB').value;if(!teamA||!teamB||teamA===teamB){alert('Selecione dois times diferentes.');return}
  const rosterA=[...(state.teams[teamA]||[])].filter(id=>player(id)&&player(id).present!==false),rosterB=[...(state.teams[teamB]||[])].filter(id=>player(id)&&player(id).present!==false);if(!rosterA.length||!rosterB.length){alert('Escolha os jogadores dos dois times na aba Times antes de iniciar.');return}
- const keeperA=document.getElementById('keeperA').value,keeperB=document.getElementById('keeperB').value;if(!keeperA||!keeperB||keeperA===keeperB){alert('Selecione os dois goleiros fixos.');return}
+ const keeperA=document.getElementById('keeperA').value,keeperB=document.getElementById('keeperB').value;if(!keeperA||!keeperB||keeperA===keeperB||!player(keeperA)?.goalkeeper||!player(keeperB)?.goalkeeper||player(keeperA)?.present===false||player(keeperB)?.present===false){alert('Selecione dois goleiros cadastrados como goleiro e marcados como presentes.');return}
  const now=Date.now();state.liveMatch={id:crypto.randomUUID(),date:document.getElementById('matchDate').value||new Date().toLocaleDateString('en-CA'),teamA,teamB,scoreA:0,scoreB:0,scorersA:[],scorersB:[],rosterA,rosterB,keeperA,keeperB,startedAt:now,endsAt:now+420000,remainingMs:420000,paused:false};
  save();if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250);
 }
 function toggleLivePause(){const m=state.liveMatch;if(!m)return;if(m.paused){m.endsAt=Date.now()+Math.max(0,m.remainingMs||0);m.paused=false;if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(()=>{if(state.liveMatch&&!state.liveMatch.paused)updateLiveClock();else if(!state.liveMatch){clearInterval(liveTimer);liveTimer=null}},250)}else{m.remainingMs=Math.max(0,m.endsAt-Date.now());m.paused=true;if(liveTimer){clearInterval(liveTimer);liveTimer=null}}save();}
 function addLiveGoal(side,id){const m=state.liveMatch;if(!m)return;const roster=side==='A'?m.rosterA:m.rosterB;const keeper=side==='A'?m.keeperA:m.keeperB;if(!roster.includes(id)&&keeper!==id)return;if(m.scoreA>=2||m.scoreB>=2)return;if(side==='A'){m.scoreA++;m.scorersA.push(id)}else{m.scoreB++;m.scorersB.push(id)}if(m.scoreA>=2||m.scoreB>=2){finishLiveMatch('dois_gols');return}save()}
+function openExtraScorerModal(){const m=state.liveMatch;if(!m)return;const select=document.getElementById('extraScorerSelect');const present=activePlayers().slice().sort((a,b)=>a.name.localeCompare(b.name));select.innerHTML=present.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.goalkeeper?' (goleiro)':''}</option>`).join('');document.getElementById('extraScorerMessage').textContent=present.length?'Escolha a equipe que recebeu o gol nos botões abaixo.':'Não há participantes marcados como presentes.';document.getElementById('extraGoalA').textContent='Gol do '+teamName(m.teamA);document.getElementById('extraGoalB').textContent='Gol do '+teamName(m.teamB);document.getElementById('extraGoalA').disabled=!present.length;document.getElementById('extraGoalB').disabled=!present.length;document.getElementById('extraScorerModal').hidden=false;document.body.style.overflow='hidden'}
+function closeExtraScorerModal(){document.getElementById('extraScorerModal').hidden=true;document.body.style.overflow=''}
+function addExtraScorerGoal(side){const m=state.liveMatch;if(!m)return;if(m.scoreA>=2||m.scoreB>=2){closeExtraScorerModal();return}const id=document.getElementById('extraScorerSelect').value;if(!id||!activePlayers().some(p=>p.id===id)){document.getElementById('extraScorerMessage').textContent='Selecione um participante presente.';return}if(side==='A'){m.scoreA++;m.scorersA.push(id);if(!m.rosterA.includes(id)&&m.keeperA!==id&&m.keeperB!==id)m.rosterA.push(id)}else{m.scoreB++;m.scorersB.push(id);if(!m.rosterB.includes(id)&&m.keeperA!==id&&m.keeperB!==id)m.rosterB.push(id)}closeExtraScorerModal();if(m.scoreA>=2||m.scoreB>=2){finishLiveMatch('dois_gols');return}save()}
 function addOwnGoal(side){const m=state.liveMatch;if(!m||m.scoreA>=2||m.scoreB>=2)return;if(side==='A'){m.ownGoalsA=(m.ownGoalsA||0)+1;m.scoreB++}else{m.ownGoalsB=(m.ownGoalsB||0)+1;m.scoreA++}if(m.scoreA>=2||m.scoreB>=2){finishLiveMatch('dois_gols');return}save()}
 function finishLiveMatch(reason){
  const m=state.liveMatch;if(!m)return;if(liveTimer){clearInterval(liveTimer);liveTimer=null}
@@ -314,6 +333,7 @@ function finishLiveMatch(reason){
 
 function matchCard(m){return `<div class="item" style="margin-bottom:8px"><div class="grow"><b>${teamName(m.teamA)} ${m.scoreA} × ${m.scoreB} ${teamName(m.teamB)}</b><small>${fmtDate(m.date)} • ${m.scoreA===m.scoreB?'Empate':teamName(m.scoreA>m.scoreB?m.teamA:m.teamB)+' venceu'}</small></div><button class="btn danger small" onclick="deleteMatch('${m.id}')">Excluir</button></div>`}
 function renamePlayer(id){let p=player(id);if(!p)return;let newName=prompt('Digite o novo nome do jogador:',p.name);if(newName===null)return;newName=newName.trim();if(!newName){alert('O nome não pode ficar vazio.');return}if(newName===p.name)return;p.name=newName;save();alert('Nome atualizado com sucesso!')}
+function togglePlayerRole(id){const p=player(id);if(!p)return;const becomingKeeper=!p.goalkeeper;if(becomingKeeper){Object.keys(state.teams||{}).forEach(t=>state.teams[t]=(state.teams[t]||[]).filter(x=>x!==id));if(!state.liveMatch){['A','B'].forEach(side=>{if(document.getElementById('keeper'+side)?.value===id)document.getElementById('keeper'+side).value=''});}}p.goalkeeper=becomingKeeper;save();}
 function togglePresence(id){const p=player(id);if(!p)return;p.present=p.present===false;save()}
 function deletePlayer(id){const p=player(id);if(!p)return;if(!confirm('Excluir o cadastro de '+p.name+'? O jogador será removido das escalações, mas as partidas antigas continuarão no histórico.'))return;state.players=state.players.filter(x=>x.id!==id);Object.keys(state.teams||{}).forEach(t=>state.teams[t]=(state.teams[t]||[]).filter(x=>x!==id));if(state.liveMatch){state.liveMatch.rosterA=state.liveMatch.rosterA.filter(x=>x!==id);state.liveMatch.rosterB=state.liveMatch.rosterB.filter(x=>x!==id);if(state.liveMatch.keeperA===id)state.liveMatch.keeperA=null;if(state.liveMatch.keeperB===id)state.liveMatch.keeperB=null;}save()}
 function deleteMatch(id){if(!confirm('Excluir esta partida? As estatísticas serão recalculadas.'))return;state.matches=state.matches.filter(m=>m.id!==id);save()}
@@ -344,7 +364,7 @@ document.getElementById('teamModalList').addEventListener('change',e=>{
 document.getElementById('teamModalClear').addEventListener('click',()=>{document.querySelectorAll('#teamModalList input').forEach(i=>i.checked=false);document.getElementById('teamModalMsg').textContent='';updateModalCount()});
 document.getElementById('teamModalClose').addEventListener('click',closeTeamModal);
 document.getElementById('teamModal').addEventListener('click',e=>{if(e.target.id==='teamModal')closeTeamModal()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('teamModal').hidden)closeTeamModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!document.getElementById('teamModal').hidden)closeTeamModal();if(!document.getElementById('keeperModal').hidden)closeKeeperModal();if(!document.getElementById('extraScorerModal').hidden)closeExtraScorerModal()}});
 document.getElementById('teamModalSave').addEventListener('click',()=>{
  if(!modalTeam)return;const ids=modalChecked();
  const next={azul:[],verde:[],rosa:[],preto:[]};
@@ -352,11 +372,13 @@ document.getElementById('teamModalSave').addEventListener('click',()=>{
  next[modalTeam]=ids;state.teams=next;closeTeamModal();save();
 });
 document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');
-document.getElementById('liveMatchSetup').addEventListener('click',e=>{const b=e.target.closest('button[data-pick-side][data-pick-team]');if(b&&!b.disabled)chooseMatchTeam(b.dataset.pickSide,b.dataset.pickTeam)});
+document.getElementById('liveMatchSetup').addEventListener('click',e=>{const b=e.target.closest('button[data-pick-team]');if(b)chooseMatchTeam(b.dataset.pickTeam)});
+document.getElementById('keeperModalSave').addEventListener('click',confirmMatchTeam);document.getElementById('keeperModalClose').addEventListener('click',closeKeeperModal);document.getElementById('keeperModalCancel').addEventListener('click',closeKeeperModal);document.getElementById('keeperModal').addEventListener('click',e=>{if(e.target.id==='keeperModal')closeKeeperModal()});
 document.getElementById('startMatchBtn').addEventListener('click',startLiveMatch);
 document.getElementById('pauseMatchBtn').addEventListener('click',toggleLivePause);
 document.getElementById('endMatchBtn').addEventListener('click',()=>{if(state.liveMatch&&confirm('Deseja encerrar esta partida agora e registrar o placar atual?'))finishLiveMatch('encerramento_manual')});
 document.getElementById('liveMatchActive').addEventListener('click',e=>{const own=e.target.closest('[data-own-goal]');if(own){addOwnGoal(own.dataset.ownGoal);return}const b=e.target.closest('[data-live-goal]');if(b)addLiveGoal(b.dataset.liveGoal,b.dataset.player)});
+document.getElementById('openExtraScorer').addEventListener('click',openExtraScorerModal);document.getElementById('extraScorerClose').addEventListener('click',closeExtraScorerModal);document.getElementById('extraScorerModal').addEventListener('click',e=>{if(e.target.id==='extraScorerModal')closeExtraScorerModal()});document.getElementById('extraGoalA').addEventListener('click',()=>addExtraScorerGoal('A'));document.getElementById('extraGoalB').addEventListener('click',()=>addExtraScorerGoal('B'));
 let rankingPeriod='general';document.getElementById('rankingMonth').value=currentMonth();document.getElementById('rankingDay').value=new Date().toLocaleDateString('en-CA');document.getElementById('rankingYear').innerHTML=[...new Set([new Date().getFullYear(),...state.matches.map(m=>Number((m.date||'').slice(0,4))).filter(Boolean)])].sort((a,b)=>b-a).map(y=>`<option value="${y}">${y}</option>`).join('');document.getElementById('rankingTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-period]');if(!b)return;rankingPeriod=b.dataset.period;renderRanking()});document.getElementById('rankingMonth').addEventListener('change',renderRanking);document.getElementById('rankingYear').addEventListener('change',renderRanking);document.getElementById('rankingDay').addEventListener('change',renderRanking);
 document.getElementById('exportBtn').addEventListener('click',()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pelada-do-bilu-backup-'+currentMonth()+'.json';a.click();URL.revokeObjectURL(a.href)});
 document.getElementById('importBtn').addEventListener('click',async()=>{let f=document.getElementById('importFile').files[0];if(!f){alert('Escolha um arquivo JSON.');return}try{let data=JSON.parse(await f.text());if(!Array.isArray(data.players)||!data.teams||!Array.isArray(data.matches))throw Error();if(!confirm('Isso substituirá os dados atuais. Continuar?'))return;state=data;save();alert('Dados importados.')}catch(e){alert('Arquivo inválido ou incompatível.')}});
