@@ -76,6 +76,14 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 .daily-summary-box{background:#141d17;color:#edf7f0;border:1px solid #304336;max-width:560px;max-height:92vh}.daily-summary-box .modal-head{background:linear-gradient(120deg,#193d28,#17271d);border-bottom:1px solid #304336}.daily-summary-box .modal-head h3{color:#80e6a3}.daily-summary-box .modal-head small{display:block;color:#b5c8ba;margin-top:3px}.daily-summary-box .modal-body{padding:14px 16px 18px}.daily-summary-box .modal-actions{border-color:#304336;background:#141d17}.daily-summary-box .daily-summary-section{border:1px solid #304336;border-radius:13px;padding:13px;margin:0 0 12px;background:#19251d}.daily-summary-box .daily-summary-section h4{margin:0 0 10px;color:#80e6a3;font-size:15px}.daily-summary-box .champion-team{border-radius:10px;padding:10px 12px;color:#fff;margin:8px 0}.daily-summary-box .champion-team b{display:block;font-size:15px}.daily-summary-box .champion-team small{display:block;margin-top:5px;opacity:.95}.daily-summary-box .summary-person{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #304336}.daily-summary-box .summary-person:last-child{border-bottom:0}.daily-summary-box .summary-count{color:#80e6a3;font-weight:850;white-space:nowrap}.daily-summary-box .summary-empty{color:#a9b9ae;font-size:13px}
 @media(max-width:420px){.page-title-row{align-items:flex-start;flex-direction:column}.page-title-row .btn{width:100%}}
 
+
+/* Encerramento em sequência de cards estilo stories */
+.daily-story-modal{align-items:center;padding:12px;background:rgba(0,0,0,.88);backdrop-filter:blur(10px)}
+.daily-story-box{width:min(100%,520px);height:min(820px,94dvh);max-height:94dvh;border-radius:24px!important;border:1px solid #35533e;background:radial-gradient(ellipse at 50% 12%,#244a31 0,#121b15 48%,#090e0b 100%);box-shadow:0 24px 90px rgba(0,0,0,.65);display:flex;flex-direction:column}
+.story-progress{display:flex;gap:5px;padding:13px 14px 4px}.story-progress span{height:4px;flex:1;border-radius:9px;background:#3a4a3e}.story-progress span.active{background:#63e695}.story-top{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 4px;color:#d9e9dc}.story-top small{font-size:10px;letter-spacing:2px;font-weight:900;color:#78e69e}.story-top #dailySummaryDate{font-size:12px;color:#a9b9ae;margin-top:3px}.story-content{display:flex;align-items:center;justify-content:center;text-align:center;padding:18px 22px 22px;overflow:auto}.story-card{width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:17px;animation:storyIn .28s ease both}.story-kicker{font-size:12px;letter-spacing:3px;font-weight:900;color:#80e6a3}.story-emoji{font-size:66px;line-height:1.1;filter:drop-shadow(0 8px 20px rgba(0,0,0,.35))}.story-headline{font-size:clamp(30px,8vw,48px);line-height:1.02;letter-spacing:-1.8px;font-weight:1000;color:#f5fff7;text-transform:uppercase;text-wrap:balance}.story-subtitle{font-size:15px;color:#b6c9bb;max-width:360px}.story-big-number{font-size:clamp(52px,15vw,82px);line-height:.95;font-weight:1000;color:#8bf0aa;text-shadow:0 8px 35px rgba(75,220,130,.2)}.story-highlight{font-size:clamp(27px,7vw,40px);line-height:1.08;font-weight:950;color:#fff;text-transform:uppercase;overflow-wrap:anywhere}.story-roster{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:4px}.story-roster span{padding:8px 12px;border:1px solid #45614b;background:rgba(255,255,255,.07);border-radius:999px;color:#eff9f1;font-size:14px;font-weight:750}.story-award{width:100%;border:1px solid #45614b;background:rgba(255,255,255,.055);border-radius:18px;padding:18px 14px}.story-award + .story-award{margin-top:10px}.story-award .story-highlight{font-size:clamp(23px,6vw,34px)}.story-team-blue{background:linear-gradient(145deg,#1769aa,#12385e)}.story-team-green{background:linear-gradient(145deg,#27864a,#12452b)}.story-team-pink{background:linear-gradient(145deg,#d94f91,#72264b)}.story-team-black{background:linear-gradient(145deg,#414b45,#171e1a)}.story-actions{border:0;padding:12px 16px 17px;background:transparent}.story-actions .btn{min-height:48px}.story-actions .btn.secondary{background:#26362b}.story-actions #dailySummaryBack:disabled{opacity:.25}
+@keyframes storyIn{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:420px){.daily-story-modal{padding:8px}.daily-story-box{height:94dvh;border-radius:20px!important}.story-content{padding:12px 16px}.story-emoji{font-size:56px}.story-actions{padding:8px 12px 12px}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -224,11 +232,12 @@ footer{color:#7f9185}
 <div class="modal" id="keeperModal" hidden role="dialog" aria-modal="true" aria-labelledby="keeperModalTitle"><div class="modal-box keeper-modal-box"><div class="modal-head" id="keeperModalHead"><h3 id="keeperModalTitle">Escolher goleiro</h3><button class="btn small" id="keeperModalClose" type="button" aria-label="Fechar">✕</button></div><div class="modal-body"><p id="keeperModalDescription" class="muted">Selecione o goleiro deste time.</p><label for="keeperModalSelect">Goleiro</label><select id="keeperModalSelect"></select><div id="keeperModalMessage" class="modal-msg"></div></div><div class="modal-actions"><button class="btn secondary" id="keeperModalCancel" type="button">Cancelar</button><button class="btn" id="keeperModalSave" type="button">Confirmar time</button></div></div></div>
 <div class="modal" id="extraScorerModal" hidden role="dialog" aria-modal="true" aria-labelledby="extraScorerTitle"><div class="modal-box keeper-modal-box"><div class="modal-head" style="background:var(--green)"><h3 id="extraScorerTitle">Outro jogador / substituto</h3><button class="btn small" id="extraScorerClose" type="button" aria-label="Fechar">✕</button></div><div class="modal-body"><p class="muted">Selecione qualquer participante presente, inclusive quem entrou como substituto.</p><label for="extraScorerSelect">Jogador</label><select id="extraScorerSelect"></select><div id="extraScorerMessage" class="modal-msg"></div></div><div class="modal-actions"><button class="btn secondary" id="extraGoalA" type="button">Gol do time A</button><button class="btn" id="extraGoalB" type="button">Gol do time B</button></div></div></div>
 
-<div class="modal" id="dailySummaryModal" hidden role="dialog" aria-modal="true" aria-labelledby="dailySummaryTitle">
- <div class="modal-box daily-summary-box">
-  <div class="modal-head"><div><h3 id="dailySummaryTitle">🏁 Fim da pelada</h3><small id="dailySummaryDate"></small></div><button class="btn small" type="button" id="dailySummaryClose" aria-label="Fechar">✕</button></div>
-  <div class="modal-body" id="dailySummaryContent"></div>
-  <div class="modal-actions"><button class="btn" type="button" id="dailySummaryDone">Concluir</button></div>
+<div class="modal daily-story-modal" id="dailySummaryModal" hidden role="dialog" aria-modal="true" aria-labelledby="dailySummaryTitle">
+ <div class="modal-box daily-summary-box daily-story-box">
+  <div class="story-progress" id="dailyStoryProgress"></div>
+  <div class="story-top"><div><small>PELADA DO BILU</small><div id="dailySummaryDate"></div></div><button class="btn small" type="button" id="dailySummaryClose" aria-label="Fechar">✕</button></div>
+  <div class="modal-body story-content" id="dailySummaryContent"></div>
+  <div class="modal-actions story-actions"><button class="btn secondary" type="button" id="dailySummaryBack">← Voltar</button><button class="btn" type="button" id="dailySummaryNext">Próximo →</button></div>
  </div>
 </div>
 
@@ -459,7 +468,7 @@ function finishLiveMatch(reason){
 document.getElementById('editMatchForm').addEventListener('submit',saveEditedMatch);
 document.getElementById('editMatchClose').addEventListener('click',closeEditMatch);
 document.getElementById('editMatchCancel').addEventListener('click',closeEditMatch);
-document.getElementById('closePeladaBtn').addEventListener('click',closePeladaForToday);document.getElementById('dailySummaryClose').addEventListener('click',closeDailySummary);document.getElementById('dailySummaryDone').addEventListener('click',closeDailySummary);document.getElementById('dailySummaryModal').addEventListener('click',e=>{if(e.target.id==='dailySummaryModal')closeDailySummary()});
+document.getElementById('closePeladaBtn').addEventListener('click',closePeladaForToday);document.getElementById('dailySummaryClose').addEventListener('click',closeDailySummary);document.getElementById('dailySummaryBack').addEventListener('click',()=>showDailyStory(dailyStoryIndex-1));document.getElementById('dailySummaryNext').addEventListener('click',()=>dailyStoryIndex===3?closeDailySummary():showDailyStory(dailyStoryIndex+1));document.getElementById('dailySummaryModal').addEventListener('click',e=>{if(e.target.id==='dailySummaryModal')closeDailySummary()});
 document.getElementById('editMatchModal').addEventListener('click',e=>{if(e.target.id==='editMatchModal')closeEditMatch()});
 document.getElementById('editScoreA').addEventListener('change',refreshEditGoalSlots);
 document.getElementById('editScoreB').addEventListener('change',refreshEditGoalSlots);
@@ -486,13 +495,30 @@ function getDailySummary(date){
  const keeperRows=Object.entries(keeperWins).map(([id,wins])=>({id,wins,name:player(id)?.name||'Goleiro não cadastrado'}));const maxKeeperWins=Math.max(0,...keeperRows.map(x=>x.wins));const topKeepers=maxKeeperWins?keeperRows.filter(x=>x.wins===maxKeeperWins).sort((a,b)=>a.name.localeCompare(b.name)):[];
  return {date,matches,champions,maxTeamWins,teamRoster,topScorers,maxGoals,topKeepers,maxKeeperWins};
 }
+let dailyStoryIndex=0;
+function showDailyStory(index){
+ dailyStoryIndex=Math.max(0,Math.min(3,index));
+ const modal=document.getElementById('dailySummaryModal');
+ const progress=document.getElementById('dailyStoryProgress');
+ progress.innerHTML=Array.from({length:4},(_,i)=>`<span class="${i<=dailyStoryIndex?'active':''}"></span>`).join('');
+ const slides=window.dailyStorySlides||[];
+ document.getElementById('dailySummaryContent').innerHTML=slides[dailyStoryIndex]||'';
+ document.getElementById('dailySummaryBack').disabled=dailyStoryIndex===0;
+ document.getElementById('dailySummaryNext').textContent=dailyStoryIndex===3?'Finalizar ✓':'Próximo →';
+ document.getElementById('dailySummaryTitle').textContent=['🏁 Pelada encerrada','🏆 Time campeão','⚽ Artilheiros','🧤 Goleiro da pelada'][dailyStoryIndex];
+}
 function openDailySummary(date){
- const d=getDailySummary(date);document.getElementById('dailySummaryDate').textContent=fmtDate(date)+' • '+d.matches.length+' partida(s) concluída(s)';
- const championHtml=d.champions.length?d.champions.map(t=>{const names=[...(d.teamRoster[t.id]||[])].map(id=>player(id)?.name).filter(Boolean).sort((a,b)=>a.localeCompare(b));return `<div class="champion-team ${t.cls}"><b>🏆 Time ${esc(t.name)}${d.champions.length>1?' • Empate na liderança':''}</b><small>${names.length?`Elenco: ${names.map(esc).join(', ')}`:'Elenco de linha não registrado nas partidas.'}</small><small>${d.maxTeamWins} vitória(s) no dia</small></div>`}).join(''):'<div class="summary-empty">Não houve time campeão: nenhuma equipe terminou o dia com vitórias.</div>';
- const scorerHtml=d.topScorers.length?d.topScorers.map(p=>`<div class="summary-person"><b>${esc(p.name)}</b><span class="summary-count">⚽ ${p.goals} gol${p.goals===1?'':'s'}</span></div>`).join(''):'<div class="summary-empty">Nenhum gol com autor identificado foi registrado neste dia.</div>';
- const keeperHtml=d.topKeepers.length?d.topKeepers.map(p=>`<div class="summary-person"><b>${esc(p.name)}</b><span class="summary-count">🧤 ${p.wins} vitória${p.wins===1?'':'s'}</span></div>`).join(''):'<div class="summary-empty">Nenhum goleiro conquistou vitórias neste dia.</div>';
- document.getElementById('dailySummaryContent').innerHTML=`<section class="daily-summary-section"><h4>🏆 Time campeão</h4>${championHtml}</section><section class="daily-summary-section"><h4>⚽ Artilheiro(s) da pelada</h4>${scorerHtml}</section><section class="daily-summary-section"><h4>🧤 Goleiro(s) da pelada</h4>${keeperHtml}</section>`;
- document.getElementById('dailySummaryModal').hidden=false;document.body.style.overflow='hidden';
+ const d=getDailySummary(date);document.getElementById('dailySummaryDate').textContent=fmtDate(date)+' • '+d.matches.length+' partida(s)';
+ const championSlides=d.champions.length?d.champions.map(t=>{const names=[...(d.teamRoster[t.id]||[])].map(id=>player(id)?.name).filter(Boolean).sort((a,b)=>a.localeCompare(b));return `<div class="story-award story-team-${esc(t.cls)}"><div class="story-emoji">🏆</div><div class="story-kicker">CAMPEÃO DO DIA</div><div class="story-highlight">TIME ${esc(t.name)}</div><div class="story-subtitle">${d.champions.length>1?'Empate na liderança':'Grande campeão da pelada'}</div><div class="story-roster">${names.length?names.map(n=>`<span>${esc(n)}</span>`).join(''):'<span>Elenco de linha não registrado</span>'}</div><div class="story-subtitle">${d.maxTeamWins} vitória(s) no dia</div></div>`}).join(''):'<div class="story-award"><div class="story-emoji">🏆</div><div class="story-highlight">Sem campeão</div><div class="story-subtitle">Nenhuma equipe terminou o dia com vitórias.</div></div>';
+ const scorerSlides=d.topScorers.length?d.topScorers.map(p=>`<div class="story-award"><div class="story-big-number">${p.goals}</div><div class="story-highlight">${esc(p.name)}</div><div class="story-subtitle">⚽ ${p.goals===1?'GOL MARCADO':'GOLS MARCADOS'}</div></div>`).join(''):'<div class="story-award"><div class="story-emoji">⚽</div><div class="story-highlight">Sem artilheiro</div><div class="story-subtitle">Nenhum gol com autor identificado foi registrado.</div></div>';
+ const keeperSlides=d.topKeepers.length?d.topKeepers.map(p=>`<div class="story-award"><div class="story-emoji">🧤</div><div class="story-highlight">${esc(p.name)}</div><div class="story-big-number">${p.wins}</div><div class="story-subtitle">${p.wins===1?'VITÓRIA CONQUISTADA':'VITÓRIAS CONQUISTADAS'}</div></div>`).join(''):'<div class="story-award"><div class="story-emoji">🧤</div><div class="story-highlight">Sem destaque</div><div class="story-subtitle">Nenhum goleiro conquistou vitórias neste dia.</div></div>';
+ window.dailyStorySlides=[
+ `<div class="story-card"><div class="story-emoji">🏁</div><div class="story-kicker">PELADA DO BILU</div><div class="story-headline">Pelada<br>encerrada!</div><div class="story-big-number">${d.matches.length}</div><div class="story-subtitle">${d.matches.length===1?'PARTIDA CONCLUÍDA':'PARTIDAS CONCLUÍDAS'} • ${fmtDate(date)}</div><div class="story-subtitle">Mais uma noite de futebol, amizade e resenha!</div></div>`,
+ `<div class="story-card"><div class="story-kicker">PREMIAÇÃO DO DIA</div><div class="story-headline">Time<br>campeão</div>${championSlides}</div>`,
+ `<div class="story-card"><div class="story-kicker">QUEM GUARDOU A BOLA?</div><div class="story-headline">Artilheiro(s)</div>${scorerSlides}</div>`,
+ `<div class="story-card"><div class="story-kicker">PAREDÃO DA NOITE</div><div class="story-headline">Goleiro<br>da pelada</div>${keeperSlides}<div class="story-subtitle">Até a próxima! ⚽</div></div>`
+ ];
+ showDailyStory(0);document.getElementById('dailySummaryModal').hidden=false;document.body.style.overflow='hidden';
 }
 function closeDailySummary(){document.getElementById('dailySummaryModal').hidden=true;document.body.style.overflow=''}
 function closePeladaForToday(){
