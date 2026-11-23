@@ -196,7 +196,7 @@ footer{color:#7f9185}
 <div class="card"><h3>Times</h3><div id="teamSummary" class="teamgrid"></div><div class="muted" id="noTeam" style="margin-top:12px"></div></div>
 </section>
 <section class="page" id="partidas">
-<div class="page-title-row"><h2>Gerenciamento de partidas</h2><button class="btn danger" id="closePeladaBtn" type="button">🏁 Encerrar pelada</button></div>
+<div class="page-title-row"><h2>Gerenciamento de partidas</h2><button class="btn danger" id="closePeladaBtn" type="button" style="position:relative;z-index:5;pointer-events:auto">🏁 Encerrar pelada</button></div>
 <div class="card"><h3>🔄 Referência do rodízio</h3><div id="rotationStatus"></div><p class="muted">Esta informação é apenas uma referência. Você escolhe manualmente os dois times de cada nova partida; o aplicativo não troca os times automaticamente.</p></div>
 <div class="card" id="liveMatchCard">
 <div class="row between"><h3>⚽ Partida em andamento</h3><span class="pill" id="liveMatchBadge">Aguardando início</span></div>
@@ -283,6 +283,12 @@ function initialPlayers(){return [...PRELOADED_PLAYERS.map((name,i)=>({id:'pre-'
 const defaultState=()=>({players:initialPlayers(),teams:{azul:[],verde:[],rosa:[],preto:[]},matches:[],rotation:{playing:['azul','verde'],reserve:['rosa','preto']},closedSessions:[]});
 let state=defaultState();
 let liveTimer=null;
+// Data local em formato ISO, sem depender da formatação regional do navegador.
+function localDateKey(date=new Date()){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,'0'),d=String(date.getDate()).padStart(2,'0');return `${y}-${m}-${d}`}
+function todayCompletedMatches(date=localDateKey()){return (state.matches||[]).filter(m=>(m.date||'').slice(0,10)===date)}
+function isTodaySessionClosed(date=localDateKey()){return (state.closedSessions||[]).some(x=>(typeof x==='string'?x:x.date)===date)}
+// Delegação registrada no início: o botão continua funcional mesmo se outro trecho da inicialização falhar.
+document.addEventListener('click',function(e){const button=e.target.closest('#closePeladaBtn');if(!button)return;e.preventDefault();e.stopPropagation();closePeladaForToday()},true);
 function loadState(){try{let saved=JSON.parse(localStorage.getItem(STORE));if(!saved)return defaultState();if(!Array.isArray(saved.players)||saved.players.length===0){saved.players=initialPlayers();saved.teams=saved.teams||{azul:[],verde:[],rosa:[],preto:[]}}return saved}catch(e){return defaultState()}}
 function save(){
  localStorage.setItem(STORE,JSON.stringify(state));
@@ -359,7 +365,7 @@ function table(rows,metric,label){if(!rows.length)return '<div class="empty">Ain
 function byResults(a,b){return b.wins-a.wins||b.draws-a.draws||a.losses-b.losses||a.name.localeCompare(b.name)}
 function resultsTable(rows){if(!rows.length)return '<div class="empty">Ainda não há dados para este período.</div>';return `<table class="restable"><thead><tr><th>#</th><th>Jogador</th><th class="num">Vitórias</th><th class="num">Empates</th><th class="num">Derrotas</th></tr></thead><tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}${p.goalkeeper?' <small>Goleiro</small>':''}</td><td class="num"><b>${p.wins}</b></td><td class="num">${p.draws}</td><td class="num">${p.losses}</td></tr>`).join('')}</tbody></table>`}
 function render(){
- const todayKey=new Date().toLocaleDateString('en-CA');const closeBtn=document.getElementById('closePeladaBtn');if(closeBtn){const closed=(state.closedSessions||[]).some(x=>(typeof x==='string'?x:x.date)===todayKey);closeBtn.textContent=closed?'🏆 Ver resumo da pelada':'🏁 Encerrar pelada';closeBtn.classList.toggle('secondary',closed);closeBtn.classList.toggle('danger',!closed)}
+ const todayKey=localDateKey();const closeBtn=document.getElementById('closePeladaBtn');if(closeBtn){const hasRecords=todayCompletedMatches(todayKey).length>0;const closed=hasRecords&&isTodaySessionClosed(todayKey);closeBtn.textContent=closed?'🏆 Ver resumo da pelada':'🏁 Encerrar pelada';closeBtn.classList.toggle('secondary',closed);closeBtn.classList.toggle('danger',!closed)}
  const month=document.getElementById('rankingMonth')?.value||currentMonth(),ms=monthMatches(month),st=stats(month);
  document.getElementById('metrics').innerHTML=`<div class="card"><div class="metric">${activePlayers().length}</div><div class="metric-label">Participantes ativos</div></div><div class="card"><div class="metric">${keepers().length}</div><div class="metric-label">Goleiros fixos</div></div><div class="card"><div class="metric">${ms.length}</div><div class="metric-label">Partidas no mês</div></div><div class="card"><div class="metric">${ms.reduce((a,m)=>a+m.scoreA+m.scoreB,0)}</div><div class="metric-label">Gols no mês</div></div>`;
  document.getElementById('monthLabel').textContent=new Date(month+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
@@ -516,11 +522,10 @@ function openDailySummary(date){
 }
 function closeDailySummary(){document.getElementById('dailySummaryModal').hidden=true;document.body.style.overflow=''}
 function closePeladaForToday(){
- const date=new Date().toLocaleDateString('en-CA');const closed=(state.closedSessions||[]).some(x=>(typeof x==='string'?x:x.date)===date);
+ const date=localDateKey();const matches=todayCompletedMatches(date);const closed=matches.length>0&&isTodaySessionClosed(date);
  if(closed){openDailySummary(date);return}
- if(state.liveMatch&&(state.liveMatch.date||date)===date){alert('Ainda existe uma partida em andamento. Encerre a partida antes de encerrar a pelada.');return}
- const matches=state.matches.filter(m=>(m.date||'')===date);
- if(!matches.length){alert('Ainda não há partidas concluídas hoje para gerar o resumo da pelada.');return}
+ if(state.liveMatch&&(state.liveMatch.date||date).slice(0,10)===date){alert('Ainda existe uma partida em andamento. Encerre a partida antes de encerrar a pelada.');return}
+ if(!matches.length){alert('Ainda não há partidas concluídas hoje. Registre e encerre pelo menos uma partida para fechar a pelada e gerar as premiações.');return}
  if(!confirm(`Deseja realmente encerrar a pelada de hoje (${fmtDate(date)})?\n\nO aplicativo vai gerar o resumo usando somente as ${matches.length} partida(s) concluída(s) desta data.`))return;
  if(!Array.isArray(state.closedSessions))state.closedSessions=[];state.closedSessions.push({date,closedAt:new Date().toISOString()});save();openDailySummary(date);
 }
@@ -626,7 +631,6 @@ document.getElementById('keeperModalSave').addEventListener('click',confirmMatch
 document.getElementById('editMatchForm').addEventListener('submit',saveEditedMatch);
 document.getElementById('editMatchClose').addEventListener('click',closeEditMatch);
 document.getElementById('editMatchCancel').addEventListener('click',closeEditMatch);
-document.getElementById('closePeladaBtn').addEventListener('click',closePeladaForToday);
 document.getElementById('dailySummaryClose').addEventListener('click',closeDailySummary);
 document.getElementById('dailySummaryBack').addEventListener('click',()=>showDailyStory(dailyStoryIndex-1));
 document.getElementById('dailySummaryNext').addEventListener('click',()=>dailyStoryIndex===3?closeDailySummary():showDailyStory(dailyStoryIndex+1));
