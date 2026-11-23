@@ -84,6 +84,16 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 @keyframes storyIn{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:420px){.daily-story-modal{padding:8px}.daily-story-box{height:94dvh;border-radius:20px!important}.story-content{padding:12px 16px}.story-emoji{font-size:56px}.story-actions{padding:8px 12px 12px}}
 
+
+/* Fotos dos jogadores */
+.player-avatar{width:46px;height:46px;flex:none;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#31563d,#17251b);border:2px solid #52785d;color:#dff7e5;font-weight:900;font-size:15px;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.player-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.player-avatar.large{width:clamp(100px,28vw,150px);height:clamp(100px,28vw,150px);border-width:3px;font-size:34px;margin:0 auto 8px}
+.player-avatar.small{width:34px;height:34px;font-size:12px;border-width:1px}
+.player-line{display:flex;align-items:center;gap:10px;min-width:0}
+.story-person-photo{display:flex;flex-direction:column;align-items:center;gap:8px}
+.story-roster-person{display:inline-flex;align-items:center;gap:7px;padding:6px 10px 6px 6px;border:1px solid #45614b;background:rgba(255,255,255,.07);border-radius:999px;color:#eff9f1;font-size:13px;font-weight:750}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -187,7 +197,7 @@ footer{color:#7f9185}
 </section>
 <section class="page" id="jogadores">
 <h2>Jogadores</h2>
-<div class="card"><h3>Cadastrar jogador</h3><form id="playerForm"><label for="playerName">Nome do jogador</label><input id="playerName" required maxlength="60" placeholder="Digite o nome completo"><label><input id="isGoalkeeper" type="checkbox"> É um dos goleiros fixos</label><button class="btn">Adicionar jogador</button></form></div>
+<div class="card"><h3>Cadastrar jogador</h3><form id="playerForm"><label for="playerName">Nome do jogador</label><input id="playerName" required maxlength="60" placeholder="Digite o nome completo"><label for="playerPhotoFile">Foto do jogador (opcional)</label><input id="playerPhotoFile" type="file" accept="image/*" capture="environment"><label><input id="isGoalkeeper" type="checkbox"> É um dos goleiros fixos</label><button class="btn">Adicionar jogador</button></form></div>
 <div class="card"><div class="row between"><div><h3>Presença nesta pelada</h3><div class="muted">Marque quem veio. Quem faltar continua cadastrado.</div></div><span class="pill" id="playerCount"></span></div><div class="list" id="playerList"></div></div>
 </section>
 <section class="page" id="times">
@@ -267,6 +277,7 @@ footer{color:#7f9185}
  </div>
 </div>
 
+<input id="changePlayerPhotoInput" type="file" accept="image/*" hidden><div id="photoUploadStatus" class="muted" style="text-align:center;padding:0 12px 8px"></div>
 </div><!-- fim appShell -->
 <script>
 const TEAM_INFO = [
@@ -337,6 +348,31 @@ document.getElementById('logoutBtn').addEventListener('click',async()=>{await su
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function teamName(id){return TEAM_INFO.find(t=>t.id===id)?.name||id}
 function player(id){return state.players.find(p=>p.id===id)}
+function playerPhotoUrl(p){if(!p||!p.photoPath)return '';return supabaseClient.storage.from('player-photos').getPublicUrl(p.photoPath).data.publicUrl}
+function playerAvatar(p,size=''){const name=p?.name||'Jogador';const initials=name.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'⚽';const url=playerPhotoUrl(p);return `<span class="player-avatar ${size}">${url?`<img src="${esc(url)}" alt="Foto de ${esc(name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">`:''}<span style="${url?'display:none;':''}">${esc(initials)}</span></span>`}
+async function uploadPlayerPhoto(playerId,file){
+ if(!file)return;
+ if(!file.type||!file.type.startsWith('image/')){alert('Escolha um arquivo de imagem.');return}
+ if(file.size>5*1024*1024){alert('A foto deve ter no máximo 5 MB.');return}
+ if(!currentUser){alert('Entre novamente no aplicativo para enviar fotos.');return}
+ const p=player(playerId);if(!p)return;
+ const status=document.getElementById('photoUploadStatus');if(status)status.textContent='Enviando foto de '+p.name+'…';
+ const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+ const path=`${currentUser.id}/${playerId}-${Date.now()}.${ext}`;
+ const {error}=await supabaseClient.storage.from('player-photos').upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});
+ if(error){console.error('Erro ao enviar foto:',error);if(status)status.textContent='Falha no envio da foto.';alert('Não foi possível enviar a foto. Confira se o bucket player-photos e as permissões foram configurados no Supabase.');return}
+ const oldPath=p.photoPath;p.photoPath=path;save();
+ if(oldPath&&oldPath!==path){const {error:removeError}=await supabaseClient.storage.from('player-photos').remove([oldPath]);if(removeError)console.warn('Não foi possível remover a foto anterior:',removeError)}
+ if(status)status.textContent='✓ Foto de '+p.name+' atualizada';
+}
+async function removePlayerPhoto(id){
+ const p=player(id);if(!p||!p.photoPath)return;
+ if(!confirm('Remover a foto de '+p.name+'?'))return;
+ const path=p.photoPath;p.photoPath=null;save();
+ const {error}=await supabaseClient.storage.from('player-photos').remove([path]);
+ if(error)console.warn('Não foi possível remover o arquivo antigo:',error);
+}
+function choosePlayerPhoto(id){const input=document.getElementById('changePlayerPhotoInput');input.dataset.playerId=id;input.value='';input.click()}
 function activePlayers(){return state.players.filter(p=>p.present!==false)}
 function keepers(){return activePlayers().filter(p=>p.goalkeeper)}
 function outfield(){return activePlayers().filter(p=>!p.goalkeeper)}
@@ -372,12 +408,12 @@ function render(){
  document.getElementById('homeRanking').innerHTML=resultsTable([...st].sort(byResults).slice(0,5));
  document.getElementById('recentMatches').innerHTML=state.matches.length?state.matches.slice().reverse().slice(0,4).map(matchCard).join(''):'<div class="empty">Registre a primeira partida para ver o histórico.</div>';
  document.getElementById('playerCount').textContent=activePlayers().length+' presentes • '+state.players.length+' cadastrados';
- document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item player-item"><label class="presence-row grow player-presence" style="margin:0"><input type="checkbox" ${p.present===false?'':'checked'} onchange="togglePresence('${p.id}')"><span><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro':'Jogador de linha'} • ${p.present===false?'Ausente':'Presente'}</small></span></label><div class="player-actions"><button class="btn secondary small role-button" onclick="togglePlayerRole('${p.id}')">${p.goalkeeper?'Virar linha':'Virar goleiro'}</button><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn danger small" onclick="deletePlayer('${p.id}')">Excluir</button></div></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
- document.getElementById('goalkeeperList').innerHTML=keepers().length?keepers().map(p=>`<div class="item"><b>${esc(p.name)}</b><span class="pill">Goleiro fixo</span></div>`).join(''):'<div class="empty">Cadastre os dois goleiros na tela Jogadores.</div>';
+  document.getElementById('playerList').innerHTML=state.players.length?state.players.map(p=>`<div class="item player-item"><div class="player-line player-presence grow">${playerAvatar(p)}<label class="presence-row grow" style="margin:0"><input type="checkbox" ${p.present===false?'':'checked'} onchange="togglePresence('${p.id}')"><span><b>${esc(p.name)}</b><small>${p.goalkeeper?'Goleiro':'Jogador de linha'} • ${p.present===false?'Ausente':'Presente'}</small></span></label></div><div class="player-actions"><button class="btn secondary small role-button" onclick="togglePlayerRole('${p.id}')">${p.goalkeeper?'Virar linha':'Virar goleiro'}</button><button class="btn secondary small" onclick="renamePlayer('${p.id}')">Alterar nome</button><button class="btn secondary small" onclick="choosePlayerPhoto('${p.id}')">${p.photoPath?'Trocar foto':'Adicionar foto'}</button>${p.photoPath?`<button class="btn danger small" onclick="removePlayerPhoto('${p.id}')">Remover foto</button>`:''}<button class="btn danger small" onclick="deletePlayer('${p.id}')">Excluir</button></div></div>`).join(''):'<div class="empty">Cadastre os nomes dos participantes.</div>';
+ document.getElementById('goalkeeperList').innerHTML=keepers().length?keepers().map(p=>`<div class="item"><div class="player-line">${playerAvatar(p)}<b>${esc(p.name)}</b></div><span class="pill">Goleiro fixo</span></div>`).join(''):'<div class="empty">Cadastre os dois goleiros na tela Jogadores.</div>';
  const rot=state.rotation||{playing:['azul','verde'],reserve:['rosa','preto']};
  document.getElementById('rotationStatus').innerHTML=`<div class="grid"><div><div class="muted">Últimos times indicados</div>${rot.playing.map(t=>`<div class="team ${TEAM_INFO.find(x=>x.id===t)?.cls||''}"><strong>${teamName(t)}</strong></div>`).join('')}</div><div><div class="muted">Outros times</div>${rot.reserve.map((t,i)=>`<div class="item"><span>${i+1}. ${esc(teamName(t))}</span></div>`).join('')}</div></div>`;
 
- document.getElementById('teamSummary').innerHTML=TEAM_INFO.map(t=>`<div class="team ${t.cls}"><strong>${t.name.toUpperCase()} (${(state.teams[t.id]||[]).length}/${TEAM_LIMIT})</strong><div class="members">${(state.teams[t.id]||[]).map(id=>player(id)?.name).filter(Boolean).map(esc).join(', ')||'Nenhum jogador selecionado'}</div><button type="button" class="btn small" onclick="openTeamModal('${t.id}')">Escolher jogadores do ${esc(t.name)}</button></div>`).join('');
+  document.getElementById('teamSummary').innerHTML=TEAM_INFO.map(t=>`<div class="team ${t.cls}"><strong>${t.name.toUpperCase()} (${(state.teams[t.id]||[]).length}/${TEAM_LIMIT})</strong><div class="members" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px">${(state.teams[t.id]||[]).map(id=>player(id)).filter(Boolean).map(p=>`<span style="display:inline-flex;align-items:center;gap:5px">${playerAvatar(p,'small')}<span>${esc(p.name)}</span></span>`).join('')||'Nenhum jogador selecionado'}</div><button type="button" class="btn small" onclick="openTeamModal('${t.id}')">Escolher jogadores do ${esc(t.name)}</button></div>`).join('');
  const noTeam=outfield().filter(p=>!teamOf(p.id));
  document.getElementById('noTeam').innerHTML=noTeam.length?'<b>Sem time:</b> '+noTeam.map(p=>esc(p.name)).join(', '):'Todos os jogadores já estão em um time.';
  // keeperA e keeperB são campos hidden; a seleção é feita pelo modal próprio.
@@ -448,7 +484,7 @@ function renderLiveMatch(){
  document.getElementById('liveStatus').textContent=m.paused?'Cronômetro pausado. Toque em Continuar para retomar.':'A partida termina automaticamente quando um time fizer 2 gols. Ao zerar o cronômetro, ela continua ativa até você tocar em Encerrar partida.';
  updateLiveClock();
 }
-function livePlayerRow(id,side,m){const p=player(id);if(!p)return '';const n=(side==='A'?m.scorersA:m.scorersB).filter(x=>x===id).length;return `<div class="live-player"><span class="live-player-name">${esc(p.name)}${p.goalkeeper?' <small>🧤 Goleiro</small>':''}${n?` <small>⚽ ${n}</small>`:''}</span><button class="goal-plus" type="button" data-live-goal="${side}" data-player="${esc(id)}" aria-label="Adicionar gol para ${esc(p.name)}">+</button></div>`}
+function livePlayerRow(id,side,m){const p=player(id);if(!p)return '';const n=(side==='A'?m.scorersA:m.scorersB).filter(x=>x===id).length;return `<div class="live-player"><span class="player-line" style="min-width:0">${playerAvatar(p,'small')}<span class="live-player-name">${esc(p.name)}${p.goalkeeper?' <small>🧤 Goleiro</small>':''}${n?` <small>⚽ ${n}</small>`:''}</span></span><button class="goal-plus" type="button" data-live-goal="${side}" data-player="${esc(id)}" aria-label="Adicionar gol para ${esc(p.name)}">+</button></div>`}
 function updateLiveClock(){const m=state.liveMatch;if(!m)return;const left=Math.max(0,Math.ceil(((m.paused?m.remainingMs:(m.endsAt-Date.now()))||0)/1000));const clock=document.getElementById('liveClock');if(clock){clock.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');clock.classList.toggle('warning',left<=60)}}
 function startLiveMatch(){
  if(state.liveMatch)return;const teamA=document.getElementById('matchTeamA').value,teamB=document.getElementById('matchTeamB').value;if(!teamA||!teamB||teamA===teamB){alert('Selecione dois times diferentes.');return}
@@ -509,9 +545,9 @@ function showDailyStory(index){
 }
 function openDailySummary(date){
  const d=getDailySummary(date);document.getElementById('dailySummaryDate').textContent=fmtDate(date)+' • '+d.matches.length+' partida(s)';
- const championSlides=d.champions.length?d.champions.map(t=>{const names=[...(d.teamRoster[t.id]||[])].map(id=>player(id)?.name).filter(Boolean).sort((a,b)=>a.localeCompare(b));return `<div class="story-award story-team-${esc(t.cls)}"><div class="story-emoji">🏆</div><div class="story-kicker">CAMPEÃO DO DIA</div><div class="story-highlight">TIME ${esc(t.name)}</div><div class="story-subtitle">${d.champions.length>1?'Empate na liderança':'Grande campeão da pelada'}</div><div class="story-roster">${names.length?names.map(n=>`<span>${esc(n)}</span>`).join(''):'<span>Elenco de linha não registrado</span>'}</div><div class="story-subtitle">${d.maxTeamWins} vitória(s) no dia</div></div>`}).join(''):'<div class="story-award"><div class="story-emoji">🏆</div><div class="story-highlight">Sem campeão</div><div class="story-subtitle">Nenhuma equipe terminou o dia com vitórias.</div></div>';
- const scorerSlides=d.topScorers.length?d.topScorers.map(p=>`<div class="story-award"><div class="story-big-number">${p.goals}</div><div class="story-highlight">${esc(p.name)}</div><div class="story-subtitle">⚽ ${p.goals===1?'GOL MARCADO':'GOLS MARCADOS'}</div></div>`).join(''):'<div class="story-award"><div class="story-emoji">⚽</div><div class="story-highlight">Sem artilheiro</div><div class="story-subtitle">Nenhum gol com autor identificado foi registrado.</div></div>';
- const keeperSlides=d.topKeepers.length?d.topKeepers.map(p=>`<div class="story-award"><div class="story-emoji">🧤</div><div class="story-highlight">${esc(p.name)}</div><div class="story-big-number">${p.wins}</div><div class="story-subtitle">${p.wins===1?'VITÓRIA CONQUISTADA':'VITÓRIAS CONQUISTADAS'}</div></div>`).join(''):'<div class="story-award"><div class="story-emoji">🧤</div><div class="story-highlight">Sem destaque</div><div class="story-subtitle">Nenhum goleiro conquistou vitórias neste dia.</div></div>';
+ const championSlides=d.champions.length?d.champions.map(t=>{const rosterPlayers=[...(d.teamRoster[t.id]||[])].map(id=>player(id)).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));return `<div class="story-award story-team-${esc(t.cls)}"><div class="story-emoji">🏆</div><div class="story-kicker">CAMPEÃO DO DIA</div><div class="story-highlight">TIME ${esc(t.name)}</div><div class="story-subtitle">${d.champions.length>1?'Empate na liderança':'Grande campeão da pelada'}</div><div class="story-roster">${rosterPlayers.length?rosterPlayers.map(p=>`<span class="story-roster-person">${playerAvatar(p,'small')}${esc(p.name)}</span>`).join(''):'<span>Elenco de linha não registrado</span>'}</div><div class="story-subtitle">${d.maxTeamWins} vitória(s) no dia</div></div>`}).join(''):'<div class="story-award"><div class="story-emoji">🏆</div><div class="story-highlight">Sem campeão</div><div class="story-subtitle">Nenhuma equipe terminou o dia com vitórias.</div></div>';
+  const scorerSlides=d.topScorers.length?d.topScorers.map(p=>`<div class="story-award"><div class="story-person-photo">${playerAvatar(player(p.id),'large')}<div class="story-big-number">${p.goals}</div><div class="story-highlight">${esc(p.name)}</div><div class="story-subtitle">⚽ ${p.goals===1?'GOL MARCADO':'GOLS MARCADOS'}</div></div></div>`).join(''):'<div class="story-award"><div class="story-emoji">⚽</div><div class="story-highlight">Sem artilheiro</div><div class="story-subtitle">Nenhum gol com autor identificado foi registrado.</div></div>';
+  const keeperSlides=d.topKeepers.length?d.topKeepers.map(p=>`<div class="story-award"><div class="story-person-photo">${playerAvatar(player(p.id),'large')}<div class="story-emoji">🧤</div><div class="story-highlight">${esc(p.name)}</div><div class="story-big-number">${p.wins}</div><div class="story-subtitle">${p.wins===1?'VITÓRIA CONQUISTADA':'VITÓRIAS CONQUISTADAS'}</div></div></div>`).join(''):'<div class="story-award"><div class="story-emoji">🧤</div><div class="story-highlight">Sem destaque</div><div class="story-subtitle">Nenhum goleiro conquistou vitórias neste dia.</div></div>';
  window.dailyStorySlides=[
  `<div class="story-card"><div class="story-emoji">🏁</div><div class="story-kicker">PELADA DO BILU</div><div class="story-headline">Pelada<br>encerrada!</div><div class="story-big-number">${d.matches.length}</div><div class="story-subtitle">${d.matches.length===1?'PARTIDA CONCLUÍDA':'PARTIDAS CONCLUÍDAS'} • ${fmtDate(date)}</div><div class="story-subtitle">Mais uma noite de futebol, amizade e resenha!</div></div>`,
  `<div class="story-card"><div class="story-kicker">PREMIAÇÃO DO DIA</div><div class="story-headline">Time<br>campeão</div>${championSlides}</div>`,
@@ -594,7 +630,8 @@ function deleteMatch(id){if(!confirm('Excluir esta partida? As estatísticas ser
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.go)));
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'})}
-document.getElementById('playerForm').addEventListener('submit',e=>{e.preventDefault();let name=document.getElementById('playerName').value.trim();if(!name)return;state.players.push({id:crypto.randomUUID(),name,goalkeeper:document.getElementById('isGoalkeeper').checked,active:true,present:true});e.target.reset();save()});
+document.getElementById('playerForm').addEventListener('submit',async e=>{e.preventDefault();let name=document.getElementById('playerName').value.trim();if(!name)return;const file=document.getElementById('playerPhotoFile').files[0]||null;const p={id:crypto.randomUUID(),name,goalkeeper:document.getElementById('isGoalkeeper').checked,active:true,present:true};state.players.push(p);e.target.reset();save();if(file)await uploadPlayerPhoto(p.id,file)});
+document.getElementById('changePlayerPhotoInput').addEventListener('change',async e=>{const file=e.target.files[0],id=e.target.dataset.playerId;if(file&&id)await uploadPlayerPhoto(id,file);e.target.value=''});
 const TEAM_LIMIT=4;let modalTeam=null;
 function teamOf(id){for(const t of TEAM_INFO){if((state.teams[t.id]||[]).includes(id))return t.id}return null}
 function modalChecked(){return [...document.querySelectorAll('#teamModalList input:checked')].map(i=>i.value)}
@@ -605,7 +642,7 @@ function openTeamModal(teamId){
  document.getElementById('teamModalHead').className='modal-head '+t.cls;
  document.getElementById('teamModalTitle').textContent='Time '+t.name;
  document.getElementById('teamModalMsg').textContent='';
- document.getElementById('teamModalList').innerHTML=outfield().map(p=>{const other=teamOf(p.id);return `<label class="pick"><input type="checkbox" value="${p.id}" ${cur.includes(p.id)?'checked':''}><span class="grow">${esc(p.name)}</span>${other&&other!==teamId?`<span class="pill">${esc(teamName(other))}</span>`:''}</label>`}).join('')||'<div class="empty">Cadastre jogadores na tela Jogadores.</div>';
+ document.getElementById('teamModalList').innerHTML=outfield().map(p=>{const other=teamOf(p.id);return `<label class="pick"><input type="checkbox" value="${p.id}" ${cur.includes(p.id)?'checked':''}>${playerAvatar(p,'small')}<span class="grow">${esc(p.name)}</span>${other&&other!==teamId?`<span class="pill">${esc(teamName(other))}</span>`:''}</label>`}).join('')||'<div class="empty">Cadastre jogadores na tela Jogadores.</div>';
  updateModalCount();
  document.getElementById('teamModal').hidden=false;document.body.style.overflow='hidden';
 }
