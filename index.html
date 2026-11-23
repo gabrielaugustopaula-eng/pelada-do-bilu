@@ -464,18 +464,12 @@ function finishLiveMatch(reason){
  const msg=m.scoreA===m.scoreB?'Empate! Selecione manualmente os times da próxima partida.':`${teamName(m.scoreA>m.scoreB?a:b)} venceu! Selecione manualmente os times da próxima partida.`;
  const box=document.getElementById('liveMatchFinished');box.hidden=false;box.innerHTML=`<div class="card match-finished-card"><h3>Partida encerrada</h3><div class="live-score"><div><div class="live-team-name">${esc(teamName(a))}</div><div class="live-number">${m.scoreA}</div></div><div class="live-vs">×</div><div><div class="live-team-name">${esc(teamName(b))}</div><div class="live-number">${m.scoreB}</div></div></div><p class="live-status">${esc(msg)}</p><button class="btn" id="nextMatchBtn" type="button" style="width:100%;margin-top:10px">▶ Preparar próxima partida</button></div>`;
  document.getElementById('liveMatchBadge').textContent='Partida encerrada';document.getElementById('liveMatchSetup').hidden=true;document.getElementById('liveMatchActive').hidden=true;
- document.getElementById('nextMatchBtn').addEventListener('click',()=>{box.hidden=true;
-document.getElementById('editMatchForm').addEventListener('submit',saveEditedMatch);
-document.getElementById('editMatchClose').addEventListener('click',closeEditMatch);
-document.getElementById('editMatchCancel').addEventListener('click',closeEditMatch);
-document.getElementById('closePeladaBtn').addEventListener('click',closePeladaForToday);document.getElementById('dailySummaryClose').addEventListener('click',closeDailySummary);document.getElementById('dailySummaryBack').addEventListener('click',()=>showDailyStory(dailyStoryIndex-1));document.getElementById('dailySummaryNext').addEventListener('click',()=>dailyStoryIndex===3?closeDailySummary():showDailyStory(dailyStoryIndex+1));document.getElementById('dailySummaryModal').addEventListener('click',e=>{if(e.target.id==='dailySummaryModal')closeDailySummary()});
-document.getElementById('editMatchModal').addEventListener('click',e=>{if(e.target.id==='editMatchModal')closeEditMatch()});
-document.getElementById('editScoreA').addEventListener('change',refreshEditGoalSlots);
-document.getElementById('editScoreB').addEventListener('change',refreshEditGoalSlots);
-document.getElementById('editOwnGoalsA').addEventListener('change',refreshEditGoalSlots);
-document.getElementById('editOwnGoalsB').addEventListener('change',refreshEditGoalSlots);
-
-document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');render()});
+ document.getElementById('nextMatchBtn').addEventListener('click',()=>{
+  box.hidden=true;
+  document.getElementById('liveMatchSetup').hidden=false;
+  document.getElementById('liveMatchActive').hidden=true;
+  renderLiveMatch();
+ });
 }
 
 function getDailySummary(date){
@@ -629,6 +623,19 @@ document.getElementById('teamModalSave').addEventListener('click',()=>{
 document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA');
 document.getElementById('liveMatchSetup').addEventListener('click',e=>{const b=e.target.closest('button[data-pick-team]');if(b)chooseMatchTeam(b.dataset.pickTeam)});
 document.getElementById('keeperModalSave').addEventListener('click',confirmMatchTeam);document.getElementById('keeperModalClose').addEventListener('click',closeKeeperModal);document.getElementById('keeperModalCancel').addEventListener('click',closeKeeperModal);document.getElementById('keeperModal').addEventListener('click',e=>{if(e.target.id==='keeperModal')closeKeeperModal()});
+document.getElementById('editMatchForm').addEventListener('submit',saveEditedMatch);
+document.getElementById('editMatchClose').addEventListener('click',closeEditMatch);
+document.getElementById('editMatchCancel').addEventListener('click',closeEditMatch);
+document.getElementById('closePeladaBtn').addEventListener('click',closePeladaForToday);
+document.getElementById('dailySummaryClose').addEventListener('click',closeDailySummary);
+document.getElementById('dailySummaryBack').addEventListener('click',()=>showDailyStory(dailyStoryIndex-1));
+document.getElementById('dailySummaryNext').addEventListener('click',()=>dailyStoryIndex===3?closeDailySummary():showDailyStory(dailyStoryIndex+1));
+document.getElementById('dailySummaryModal').addEventListener('click',e=>{if(e.target.id==='dailySummaryModal')closeDailySummary()});
+document.getElementById('editMatchModal').addEventListener('click',e=>{if(e.target.id==='editMatchModal')closeEditMatch()});
+document.getElementById('editScoreA').addEventListener('change',refreshEditGoalSlots);
+document.getElementById('editScoreB').addEventListener('change',refreshEditGoalSlots);
+document.getElementById('editOwnGoalsA').addEventListener('change',refreshEditGoalSlots);
+document.getElementById('editOwnGoalsB').addEventListener('change',refreshEditGoalSlots);
 document.getElementById('startMatchBtn').addEventListener('click',startLiveMatch);
 document.getElementById('pauseMatchBtn').addEventListener('click',toggleLivePause);
 document.getElementById('endMatchBtn').addEventListener('click',()=>{if(state.liveMatch&&confirm('Deseja encerrar esta partida agora e registrar o placar atual?'))finishLiveMatch('encerramento_manual')});
