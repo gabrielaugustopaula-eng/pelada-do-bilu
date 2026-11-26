@@ -56,8 +56,8 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 .player-item{flex-wrap:wrap;align-items:flex-start;gap:7px}.player-presence{flex:1 1 100%;min-width:0}.player-actions{width:100%;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:6px}.player-actions .btn{flex:0 1 auto;white-space:nowrap}.role-button{font-size:11px!important;padding:6px 8px!important}.team-choice{touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}.team-choice-grid{width:100%;min-width:0}.team-choice{width:100%;display:block}
 
 /* Edição de partidas — modal compatível com a identidade escura */
-.edit-match-box{background:#141d17;color:#edf7f0;border:1px solid #304336;max-width:620px;max-height:92vh}
-.edit-match-box .modal-body{padding:14px 16px 18px}
+.edit-match-box{background:#141d17;color:#edf7f0;border:1px solid #304336;max-width:620px;max-height:92vh;max-height:92dvh;min-height:0}
+.edit-match-box form{display:flex;flex-direction:column;min-height:0;flex:1;overflow:hidden}.edit-match-box .modal-body{padding:14px 16px 18px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;min-height:0;flex:1}
 .edit-match-box label{color:#dcebe0}
 .edit-match-box input,.edit-match-box select{background:#202b24;color:#f1faf4;border:1px solid #3a5141;color-scheme:dark}
 .edit-match-box .modal-info{border-color:#304336;color:#b9cbbf}
@@ -65,11 +65,17 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px}
 .edit-match-box .edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .edit-match-box .edit-section{border:1px solid #304336;border-radius:12px;padding:11px;margin:12px 0;background:#19251d}
 .edit-match-box .edit-section h4{margin:0 0 8px;color:#80e6a3;font-size:14px}
+
+.edit-match-box .edit-score-card{border:1px solid #35513e;background:#1b2b21;border-radius:12px;padding:9px;min-width:0}
+.edit-match-box .edit-score-stepper{display:grid;grid-template-columns:42px minmax(0,1fr) 42px;gap:7px;align-items:center}
+.edit-match-box .edit-score-stepper input{text-align:center;font-size:27px;font-weight:900;padding:5px;height:44px}
+.edit-match-box .edit-score-stepper .btn{height:42px;padding:0;font-size:22px;margin:0}
+.edit-match-box .edit-goal-instructions{font-size:12px;color:#b8c9bd;margin:4px 0 8px}
 .edit-match-box .goal-edit-row{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:center;margin:7px 0}
 .edit-match-box .goal-edit-row span{color:#9fb3a5;font-weight:800;text-align:center}
 .edit-match-box .muted{color:#a9b9ae}
 .match-actions{display:flex;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}
-@media(max-width:430px){.match-actions{width:100%;justify-content:flex-start}.edit-match-box .edit-grid{gap:7px}.edit-match-box .modal-actions{position:sticky;bottom:0}}
+@media(max-width:430px){.match-actions{width:100%;justify-content:flex-start}.edit-match-box{max-height:100dvh;height:100dvh;border-radius:0}.edit-match-box .edit-grid{gap:7px}.edit-match-box .modal-actions{position:relative;flex:none;padding-bottom:max(12px,env(safe-area-inset-bottom))}}
 
 
 .page-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.page-title-row h2{margin:5px 0}.page-title-row .btn{flex:none}
@@ -261,14 +267,14 @@ footer{color:#7f9185}
     <div class="edit-grid">
      <div><label for="editTeamA">Time A</label><select id="editTeamA" required></select></div>
      <div><label for="editTeamB">Time B</label><select id="editTeamB" required></select></div>
-     <div><label for="editScoreA">Gols do Time A</label><input type="number" id="editScoreA" min="0" max="30" required></div>
-     <div><label for="editScoreB">Gols do Time B</label><input type="number" id="editScoreB" min="0" max="30" required></div>
+     <div class="edit-score-card"><label for="editScoreA">Placar — Time A</label><div class="edit-score-stepper"><button type="button" class="btn secondary" data-edit-score-change="A" data-delta="-1" aria-label="Retirar gol do Time A">−</button><input type="number" id="editScoreA" min="0" max="2" inputmode="numeric" required readonly><button type="button" class="btn" data-edit-score-change="A" data-delta="1" aria-label="Adicionar gol ao Time A">+</button></div></div>
+     <div class="edit-score-card"><label for="editScoreB">Placar — Time B</label><div class="edit-score-stepper"><button type="button" class="btn secondary" data-edit-score-change="B" data-delta="-1" aria-label="Retirar gol do Time B">−</button><input type="number" id="editScoreB" min="0" max="2" inputmode="numeric" required readonly><button type="button" class="btn" data-edit-score-change="B" data-delta="1" aria-label="Adicionar gol ao Time B">+</button></div></div>
      <div><label for="editKeeperA">Goleiro do Time A</label><select id="editKeeperA"></select></div>
      <div><label for="editKeeperB">Goleiro do Time B</label><select id="editKeeperB"></select></div>
     </div>
     <div class="edit-grid"><div class="edit-section"><h4>Jogadores do Time A</h4><div id="editRosterA"></div></div><div class="edit-section"><h4>Jogadores do Time B</h4><div id="editRosterB"></div></div></div>
-    <div class="edit-section"><h4>⚽ Autores dos gols — Time A</h4><div class="muted">Deixe como “Sem autor identificado” quando não houver um jogador definido.</div><div id="editScorersA"></div></div>
-    <div class="edit-section"><h4>⚽ Autores dos gols — Time B</h4><div class="muted">Você pode selecionar o mesmo jogador em mais de um gol.</div><div id="editScorersB"></div></div>
+    <div class="edit-section"><h4>⚽ Gols e autores — Time A</h4><div class="edit-goal-instructions">Use + para registrar um gol e − para retirar. Depois, selecione o autor de cada gol.</div><div class="muted">Deixe como “Sem autor identificado” quando não houver um jogador definido.</div><div id="editScorersA"></div></div>
+    <div class="edit-section"><h4>⚽ Gols e autores — Time B</h4><div class="edit-goal-instructions">Use + para registrar um gol e − para retirar. Depois, selecione o autor de cada gol.</div><div class="muted">Você pode selecionar o mesmo jogador em mais de um gol.</div><div id="editScorersB"></div></div>
     <div class="edit-section"><h4>Gol contra</h4><div class="edit-grid"><div><label for="editOwnGoalsA">Gols contra do Time A</label><input type="number" id="editOwnGoalsA" min="0" max="30" value="0"></div><div><label for="editOwnGoalsB">Gols contra do Time B</label><input type="number" id="editOwnGoalsB" min="0" max="30" value="0"></div></div><p class="muted" style="margin:8px 0 0">Gol contra do Time A soma no placar do Time B, e vice-versa.</p></div>
     <div class="modal-msg" id="editMatchMessage"></div>
    </div>
@@ -622,7 +628,7 @@ function openEditMatch(id){
  document.getElementById('editOwnGoalsA').value=Number(m.ownGoalsA)||0;document.getElementById('editOwnGoalsB').value=Number(m.ownGoalsB)||0;
  renderEditRoster('A',m.rosterA||state.teams[m.teamA]||[]);renderEditRoster('B',m.rosterB||state.teams[m.teamB]||[]);
  renderEditGoalSlots('A',m.scoreA,m.scorersA||[],m.ownGoalsB||0);renderEditGoalSlots('B',m.scoreB,m.scorersB||[],m.ownGoalsA||0);
- document.getElementById('editMatchMessage').textContent='';document.getElementById('editMatchModal').hidden=false;document.body.style.overflow='hidden';
+ document.getElementById('editMatchMessage').textContent='';document.getElementById('editMatchModal').hidden=false;document.getElementById('editMatchForm').querySelector('.modal-body').scrollTop=0;document.body.style.overflow='hidden';
 }
 function closeEditMatch(){document.getElementById('editMatchModal').hidden=true;document.body.style.overflow=''}
 function saveEditedMatch(e){e.preventDefault();const id=document.getElementById('editMatchId').value,m=state.matches.find(x=>x.id===id);if(!m)return;
@@ -630,7 +636,7 @@ function saveEditedMatch(e){e.preventDefault();const id=document.getElementById(
  const scoreA=Number(document.getElementById('editScoreA').value),scoreB=Number(document.getElementById('editScoreB').value),ownGoalsA=Number(document.getElementById('editOwnGoalsA').value)||0,ownGoalsB=Number(document.getElementById('editOwnGoalsB').value)||0;
  const msg=document.getElementById('editMatchMessage');
  if(!date||!teamA||!teamB||teamA===teamB){msg.textContent='Informe uma data e selecione dois times diferentes.';return}
- if(!Number.isInteger(scoreA)||!Number.isInteger(scoreB)||scoreA<0||scoreB<0||scoreA>30||scoreB>30||ownGoalsA>scoreB||ownGoalsB>scoreA){msg.textContent='Confira o placar e os gols contra. Os gols contra do Time A não podem superar o placar do Time B, e vice-versa.';return}
+ if(!Number.isInteger(scoreA)||!Number.isInteger(scoreB)||scoreA<0||scoreB<0||scoreA>2||scoreB>2||(scoreA===2&&scoreB===2)||ownGoalsA>scoreB||ownGoalsB>scoreA){msg.textContent='Placar inválido: a partida termina quando um time chega a 2 gols. O outro time pode ter no máximo 1 gol. Confira também os gols contra.';return}
  const keeperA=document.getElementById('editKeeperA').value||null,keeperB=document.getElementById('editKeeperB').value||null;
  if(keeperA&&keeperA===keeperB){msg.textContent='Os dois times não podem ter o mesmo goleiro.';return}
  const scorersA=[...document.querySelectorAll('[data-edit-scorer="A"]')].map(x=>x.value).filter(Boolean),scorersB=[...document.querySelectorAll('[data-edit-scorer="B"]')].map(x=>x.value).filter(Boolean);
@@ -692,6 +698,17 @@ document.getElementById('dailySummaryBack').addEventListener('click',()=>showDai
 document.getElementById('dailySummaryNext').addEventListener('click',()=>dailyStoryIndex===3?closeDailySummary():showDailyStory(dailyStoryIndex+1));
 document.getElementById('dailySummaryModal').addEventListener('click',e=>{if(e.target.id==='dailySummaryModal')closeDailySummary()});
 document.getElementById('editMatchModal').addEventListener('click',e=>{if(e.target.id==='editMatchModal')closeEditMatch()});
+document.getElementById('editMatchModal').addEventListener('click',e=>{
+ const btn=e.target.closest('[data-edit-score-change]');if(!btn)return;
+ const side=btn.dataset.editScoreChange,delta=Number(btn.dataset.delta),field=document.getElementById('editScore'+side);
+ const other=Number(document.getElementById('editScore'+(side==='A'?'B':'A')).value)||0;
+ const next=Math.max(0,Math.min(2,(Number(field.value)||0)+delta));
+ if(delta>0&&(next===2&&other===2||other===2)){document.getElementById('editMatchMessage').textContent='A partida termina assim que um dos times chega a 2 gols. Não é possível continuar marcando gols.';return}
+ field.value=next;
+ if(delta<0){const ownField=document.getElementById('editOwnGoals'+(side==='A'?'B':'A'));if(Number(ownField.value)>next)ownField.value=next;}
+ document.getElementById('editMatchMessage').textContent='';
+ refreshEditGoalSlots();
+});
 document.getElementById('editScoreA').addEventListener('change',refreshEditGoalSlots);
 document.getElementById('editScoreB').addEventListener('change',refreshEditGoalSlots);
 document.getElementById('editOwnGoalsA').addEventListener('change',refreshEditGoalSlots);
