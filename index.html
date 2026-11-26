@@ -577,10 +577,25 @@ function editMatchPlayerOptions(selectedId=''){
  return `<option value="">Sem autor identificado</option>`+(!found&&selectedId?`<option value="${esc(selectedId)}" selected>Jogador não cadastrado</option>`:'')+state.players.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${esc(p.id)}" ${p.id===selectedId?'selected':''}>${esc(p.name)}${p.goalkeeper?' (goleiro)':''}</option>`).join('');
 }
 function renderEditRoster(side,ids){
- const selected=new Set(Array.isArray(ids)?ids:[]),known=state.players.slice().sort((a,b)=>a.name.localeCompare(b.name));
- const missing=[...selected].filter(id=>!state.players.some(p=>p.id===id));
- document.getElementById('editRoster'+side).innerHTML=[...known.map(p=>`<label class=\"presence-row\" style=\"margin:5px 0;font-weight:550\"><input type=\"checkbox\" data-edit-roster=\"${side}\" value=\"${esc(p.id)}\" ${selected.has(p.id)?'checked':''}><span>${esc(p.name)}${p.goalkeeper?' 🧤':''}</span></label>`),...missing.map(id=>`<label class=\"presence-row\" style=\"margin:5px 0;font-weight:550\"><input type=\"checkbox\" data-edit-roster=\"${side}\" value=\"${esc(id)}\" checked><span>Jogador removido do cadastro</span></label>`)].join('')||'<span class=\"muted\">Nenhum jogador cadastrado.</span>';
+ const selected=[...new Set(Array.isArray(ids)?ids:[])];
+ const known=state.players.filter(p=>!p.goalkeeper).slice().sort((a,b)=>a.name.localeCompare(b.name));
+ const missing=selected.filter(id=>!state.players.some(p=>p.id===id));
+ const rows=selected.map(id=>{
+  const p=player(id);const name=p?esc(p.name):'Jogador removido do cadastro';
+  return `<div class="presence-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:5px 0;padding:7px 9px"><span>${name}</span><button class="btn danger small" type="button" data-edit-remove="${side}" data-player-id="${esc(id)}">Retirar</button><input type="hidden" data-edit-roster="${side}" value="${esc(id)}"></div>`;
+ }).join('');
+ const options=known.filter(p=>!selected.includes(p.id)).map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+ document.getElementById('editRoster'+side).innerHTML=`<div class="muted" style="margin-bottom:7px">${selected.length} jogador(es) escalado(s)</div>${rows||'<div class="muted" style="padding:7px 0">Nenhum jogador selecionado para este time.</div>'}<div style="display:flex;gap:6px;margin-top:9px;align-items:center"><select data-edit-add-select="${side}" style="min-width:0;flex:1"><option value="">Adicionar jogador...</option>${options}</select><button class="btn secondary small" type="button" data-edit-add="${side}">Adicionar</button></div>${missing.length?'<div class="muted" style="margin-top:6px">Jogadores removidos do cadastro foram mantidos no histórico.</div>':''}`;
 }
+function editRosterIds(side){return [...document.querySelectorAll(`[data-edit-roster="${side}"]`)].map(x=>x.value)}
+function addEditRosterPlayer(side){
+ const select=document.querySelector(`[data-edit-add-select="${side}"]`),id=select?.value;
+ if(!id)return;
+ const other=side==='A'?'B':'A';
+ if(editRosterIds(other).includes(id)){document.getElementById('editMatchMessage').textContent='Esse jogador já está escalado no outro time.';return}
+ renderEditRoster(side,[...editRosterIds(side),id]);document.getElementById('editMatchMessage').textContent='';
+}
+
 function renderEditGoalSlots(side,score,scorers,ownGoals){
  const count=Math.max(0,Math.min(30,Number(score)||0)-(Number(ownGoals)||0));
  const ids=Array.isArray(scorers)?scorers:[];
@@ -619,7 +634,7 @@ function saveEditedMatch(e){e.preventDefault();const id=document.getElementById(
  const keeperA=document.getElementById('editKeeperA').value||null,keeperB=document.getElementById('editKeeperB').value||null;
  if(keeperA&&keeperA===keeperB){msg.textContent='Os dois times não podem ter o mesmo goleiro.';return}
  const scorersA=[...document.querySelectorAll('[data-edit-scorer="A"]')].map(x=>x.value).filter(Boolean),scorersB=[...document.querySelectorAll('[data-edit-scorer="B"]')].map(x=>x.value).filter(Boolean);
- const rosterA=[...document.querySelectorAll('[data-edit-roster="A"]:checked')].map(x=>x.value),rosterB=[...document.querySelectorAll('[data-edit-roster="B"]:checked')].map(x=>x.value);
+ const rosterA=editRosterIds('A'),rosterB=editRosterIds('B');
  if(rosterA.some(x=>rosterB.includes(x))){msg.textContent='Um jogador não pode estar escalado nos dois times ao mesmo tempo.';return}
  if((keeperA&&rosterA.includes(keeperA))||(keeperB&&rosterB.includes(keeperB))){msg.textContent='O goleiro não pode aparecer também como jogador de linha na mesma partida.';return}
  Object.assign(m,{date,teamA,teamB,scoreA,scoreB,keeperA,keeperB,scorersA,scorersB,ownGoalsA,ownGoalsB,rosterA,rosterB});
@@ -666,6 +681,10 @@ document.getElementById('matchDate').value=new Date().toLocaleDateString('en-CA'
 document.getElementById('liveMatchSetup').addEventListener('click',e=>{const b=e.target.closest('button[data-pick-team]');if(b)chooseMatchTeam(b.dataset.pickTeam)});
 document.getElementById('keeperModalSave').addEventListener('click',confirmMatchTeam);document.getElementById('keeperModalClose').addEventListener('click',closeKeeperModal);document.getElementById('keeperModalCancel').addEventListener('click',closeKeeperModal);document.getElementById('keeperModal').addEventListener('click',e=>{if(e.target.id==='keeperModal')closeKeeperModal()});
 document.getElementById('editMatchForm').addEventListener('submit',saveEditedMatch);
+document.getElementById('editRosterA').addEventListener('click',e=>{const add=e.target.closest('[data-edit-add="A"]');if(add){addEditRosterPlayer('A');return}const remove=e.target.closest('[data-edit-remove="A"]');if(remove)renderEditRoster('A',editRosterIds('A').filter(id=>id!==remove.dataset.playerId))});
+document.getElementById('editRosterB').addEventListener('click',e=>{const add=e.target.closest('[data-edit-add="B"]');if(add){addEditRosterPlayer('B');return}const remove=e.target.closest('[data-edit-remove="B"]');if(remove)renderEditRoster('B',editRosterIds('B').filter(id=>id!==remove.dataset.playerId))});
+document.getElementById('editTeamA').addEventListener('change',e=>{if(e.target.value===document.getElementById('editTeamB').value){document.getElementById('editMatchMessage').textContent='Selecione dois times diferentes.';return}if(confirm('Deseja carregar a escalação atual do Time A selecionado? A lista de jogadores desta edição será substituída.'))renderEditRoster('A',state.teams[e.target.value]||[])});
+document.getElementById('editTeamB').addEventListener('change',e=>{if(e.target.value===document.getElementById('editTeamA').value){document.getElementById('editMatchMessage').textContent='Selecione dois times diferentes.';return}if(confirm('Deseja carregar a escalação atual do Time B selecionado? A lista de jogadores desta edição será substituída.'))renderEditRoster('B',state.teams[e.target.value]||[])});
 document.getElementById('editMatchClose').addEventListener('click',closeEditMatch);
 document.getElementById('editMatchCancel').addEventListener('click',closeEditMatch);
 document.getElementById('dailySummaryClose').addEventListener('click',closeDailySummary);
